@@ -12,7 +12,7 @@
  ********************************************************************
 
  function: stdio-based convenience library for opening/seeking/decoding
- last mod: $Id: vorbisfile.c,v 1.6.2.4 2003/04/29 04:03:27 xiphmont Exp $
+ last mod: $Id: vorbisfile.c,v 1.6.2.5 2003/11/20 06:16:17 xiphmont Exp $
 
  ********************************************************************/
 
@@ -1476,7 +1476,7 @@ ogg_int64_t ov_pcm_tell(OggVorbis_File *vf){
 
 /* return time offset (milliseconds) of next PCM sample to be read */
 ogg_int64_t ov_time_tell(OggVorbis_File *vf){
-  int link=0,ret;
+  int link=0;
   ogg_int64_t pcm_total=0;
   ogg_int64_t time_total=0;
   
@@ -1555,7 +1555,6 @@ vorbis_comment *ov_comment(OggVorbis_File *vf,int link){
 	    *section) set to the logical bitstream number */
 
 long ov_read(OggVorbis_File *vf,void *buffer,int bytes_req,int *bitstream){
-  int i,j;
 
   long samples;
   long channels;

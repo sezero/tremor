@@ -53,9 +53,9 @@ static int ilog(unsigned int v){
   return(ret);
 }
 
-static void mergesort(ogg_uint16_t *index,ogg_uint16_t *vals,ogg_uint16_t n){
+static void mergesort(char *index,ogg_uint16_t *vals,ogg_uint16_t n){
   ogg_uint16_t i,j;
-  ogg_uint16_t *temp,*A=index,*B=_ogg_alloc(0,n*sizeof(*B));
+  char *temp,*A=index,*B=_ogg_malloc(n*sizeof(*B));
 
   for(i=1;i<n;i<<=1){
     for(j=0;j+i<n;){
@@ -83,10 +83,6 @@ static void mergesort(ogg_uint16_t *index,ogg_uint16_t *vals,ogg_uint16_t n){
     _ogg_free(B);
 }
 
-
-static int icomp(const void *a,const void *b){
-  return(**(ogg_uint16_t **)a-**(ogg_uint16_t **)b);
-}
 
 vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
   codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;

@@ -33,14 +33,6 @@ void res_clear_info(vorbis_info_residue *info){
   }
 }
 
-static int ilog(unsigned int v){
-  int ret=0;
-  while(v){
-    ret++;
-    v>>=1;
-  }
-  return(ret);
-}
 
 /* vorbis_info is for range checking */
 int res_unpack(vorbis_info_residue *info,

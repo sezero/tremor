@@ -71,6 +71,7 @@ static ogg_uint32_t decpack(long entry,long used_entry,long quantvals,
     return (ogg_uint32_t)used_entry;
 
   }
+  return 0; /* silence compiler */
 }
 
 /* 32 bit float (not IEEE; nonnormalized mantissa +
@@ -338,7 +339,7 @@ void vorbis_book_clear(codebook *b){
 int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
   char         *lengthlist=NULL;
   int           quantvals=0;
-  long          i,j,k;
+  long          i,j;
   int           maptype;
 
   memset(s,0,sizeof(*s));
