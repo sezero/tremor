@@ -79,6 +79,63 @@ static inline ogg_int32_t CLIP_TO_15(ogg_int32_t x) {
   return(ret);
 }
 
+/*
+ * This should be used as a memory barrier, forcing all cached values in
+ * registers to wr writen back to memory.  Might or might not be beneficial
+ * depending on the architecture and compiler.
+ */
+#define MB()
+
+/*
+ * The XPROD functions are meant to optimize the cross products found all
+ * over the place in mdct.c by forcing memory operation ordering to avoid
+ * unnecessary register reloads as soon as memory is being written to.
+ * However this is only beneficial on CPUs with a sane number of general
+ * purpose registers which exclude the Intel x86.  On Intel, better let the
+ * compiler actually reload registers directly from original memory by using
+ * macros.
+ */
+
+#ifdef __i386__
+
+#define XPROD32(_a, _b, _t, _v, _x, _y)	\
+  { *(_x)= MULT32(_a,_t)+MULT32(_b,_v)    ;	\
+    *(_y)= MULT32(_b,_t)-MULT32(_a,_v)    ; }
+#define XPROD31(_a, _b, _t, _v, _x, _y)	\
+  { *(_x)=(MULT32(_a,_t)+MULT32(_b,_v))<<1;	\
+    *(_y)=(MULT32(_b,_t)-MULT32(_a,_v))<<1; }
+#define XNPROD31(_a, _b, _t, _v, _x, _y)	\
+  { *(_x)=(MULT32(_a,_t)-MULT32(_b,_v))<<1;	\
+    *(_y)=(MULT32(_b,_t)+MULT32(_a,_v))<<1; }
+
+#else
+
+static inline void XPROD32(ogg_int32_t  a, ogg_int32_t  b,
+			   ogg_int32_t  t, ogg_int32_t  v,
+			   ogg_int32_t *x, ogg_int32_t *y)
+{
+  *x = MULT32(a, t) + MULT32(b, v);
+  *y = MULT32(b, t) - MULT32(a, v);
+}
+
+static inline void XPROD31(ogg_int32_t  a, ogg_int32_t  b,
+			   ogg_int32_t  t, ogg_int32_t  v,
+			   ogg_int32_t *x, ogg_int32_t *y)
+{
+  *x = (MULT32(a, t) + MULT32(b, v))<<1;
+  *y = (MULT32(b, t) - MULT32(a, v))<<1;
+}
+
+static inline void XNPROD31(ogg_int32_t  a, ogg_int32_t  b,
+			    ogg_int32_t  t, ogg_int32_t  v,
+			    ogg_int32_t *x, ogg_int32_t *y)
+{
+  *x = (MULT32(a, t) - MULT32(b, v))<<1;
+  *y = (MULT32(b, t) + MULT32(a, v))<<1;
+}
+
+#endif
+
 #endif
 
 static inline ogg_int32_t VFLOAT_MULT(ogg_int32_t a,ogg_int32_t ap,
