@@ -16,7 +16,8 @@
  ********************************************************************/
 
 #ifdef _ARM_ASSEM_
-#ifndef _V_WIDE_MATH
+
+#if !defined(_V_WIDE_MATH) && !defined(_LOW_ACCURACY_)
 #define _V_WIDE_MATH
 
 static inline ogg_int32_t MULT32(ogg_int32_t x, ogg_int32_t y) {
@@ -32,10 +33,6 @@ static inline ogg_int32_t MULT31(ogg_int32_t x, ogg_int32_t y) {
   return MULT32(x,y)<<1;
 }
 
-static inline ogg_int32_t MULT30(ogg_int32_t x, ogg_int32_t y) {
-  return MULT32(x,y)<<2;
-}
-
 static inline ogg_int32_t MULT31_SHIFT15(ogg_int32_t x, ogg_int32_t y) {
   int lo,hi;
   asm volatile("smull	%0, %1, %2, %3\n\t"
@@ -45,19 +42,6 @@ static inline ogg_int32_t MULT31_SHIFT15(ogg_int32_t x, ogg_int32_t y) {
                : "%r"(x),"r"(y)
 	       : "cc");
   return(hi);
-}
-
-static inline ogg_int32_t CLIP_TO_15(ogg_int32_t x) {
-  int tmp;
-  asm volatile("subs	%1, %0, #32768\n\t"
-	       "movpl	%0, #0x7f00\n\t"
-	       "orrpl	%0, %0, #0xff\n"
-	       "adds	%1, %0, #32768\n\t"
-	       "movmi	%0, #0x8000"
-	       : "+r"(x),"=r"(tmp)
-	       :
-	       : "cc");
-  return(x);
 }
 
 #define MB() asm volatile ("" : : : "memory")
@@ -114,6 +98,24 @@ static inline void XNPROD31(ogg_int32_t  a, ogg_int32_t  b,
   *x = x1 << 1;
   MB();
   *y = y1 << 1;
+}
+
+#endif
+
+#ifndef _V_CLIP_MATH
+#define _V_CLIP_MATH
+
+static inline ogg_int32_t CLIP_TO_15(ogg_int32_t x) {
+  int tmp;
+  asm volatile("subs	%1, %0, #32768\n\t"
+	       "movpl	%0, #0x7f00\n\t"
+	       "orrpl	%0, %0, #0xff\n"
+	       "adds	%1, %0, #32768\n\t"
+	       "movmi	%0, #0x8000"
+	       : "+r"(x),"=r"(tmp)
+	       :
+	       : "cc");
+  return(x);
 }
 
 #endif
@@ -238,3 +240,4 @@ static inline void lsp_norm_asm(ogg_uint32_t *qip,ogg_int32_t *qexpp){
 
 #endif
 #endif
+

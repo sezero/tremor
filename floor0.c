@@ -117,21 +117,21 @@ static inline ogg_int32_t toBARK(int n){
   }
 }
 
-static const int MLOOP_1[64]={
+static const unsigned char MLOOP_1[64]={
    0,10,11,11, 12,12,12,12, 13,13,13,13, 13,13,13,13,
   14,14,14,14, 14,14,14,14, 14,14,14,14, 14,14,14,14,
   15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
   15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
 };
 
-static const int MLOOP_2[64]={
+static const unsigned char MLOOP_2[64]={
   0,4,5,5, 6,6,6,6, 7,7,7,7, 7,7,7,7,
   8,8,8,8, 8,8,8,8, 8,8,8,8, 8,8,8,8,
   9,9,9,9, 9,9,9,9, 9,9,9,9, 9,9,9,9,
   9,9,9,9, 9,9,9,9, 9,9,9,9, 9,9,9,9,
 };
 
-static const int MLOOP_3[8]={0,1,2,2,3,3,3,3};
+static const unsigned char MLOOP_3[8]={0,1,2,2,3,3,3,3};
 
 void vorbis_lsp_to_curve(ogg_int32_t *curve,int *map,int n,int ln,
 			 ogg_int32_t *lsp,int m,
@@ -146,10 +146,13 @@ void vorbis_lsp_to_curve(ogg_int32_t *curve,int *map,int n,int ln,
   int ampoffseti=ampoffset*4096;
   int ampi=amp;
   ogg_int32_t *ilsp=(ogg_int32_t *)alloca(m*sizeof(*ilsp));
-  ogg_int32_t invsq=0x517cc2;
   /* lsp is in 8.24, range 0 to PI; coslook wants it in .16 0 to 1*/
   for(i=0;i<m;i++){
-    ogg_int32_t val=MULT32(lsp[i],invsq);
+#ifndef _LOW_ACCURACY_
+    ogg_int32_t val=MULT32(lsp[i],0x517cc2);
+#else
+    ogg_int32_t val=((lsp[i]>>10)*0x517d)>>14;
+#endif
 
     /* safeguard against a malicious stream */
     if(val<0 || (val>>COS_LOOKUP_I_SHIFT)>=COS_LOOKUP_I_SZ){
@@ -272,6 +275,9 @@ void vorbis_lsp_to_curve(ogg_int32_t *curve,int *map,int n,int ln,
 			                              /*  m.8, m+n<=8 */
 			    ampoffseti);              /*  8.12[0]     */
     
+#ifdef _LOW_ACCURACY_
+    amp>>=9;
+#endif
     curve[i]= MULT31_SHIFT15(curve[i],amp);
     while(map[++i]==k) curve[i]= MULT31_SHIFT15(curve[i],amp);
   }

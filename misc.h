@@ -25,10 +25,15 @@ extern void _vorbis_block_ripcord(vorbis_block *vb);
 extern void _analysis_output(char *base,int i,ogg_int32_t *v,int point,
 			     int n,int bark,int dB);
 
-#include "asm_arm.h"
-
+#ifdef _ARM_ASSEM_
+  #include "asm_arm.h"
+#endif
+  
 #ifndef _V_WIDE_MATH
 #define _V_WIDE_MATH
+  
+#ifndef  _LOW_ACCURACY_
+/* 64 bit multiply */
 
 #include <sys/types.h>
 
@@ -62,22 +67,41 @@ static inline ogg_int32_t MULT31(ogg_int32_t x, ogg_int32_t y) {
   return MULT32(x,y)<<1;
 }
 
-static inline ogg_int32_t MULT30(ogg_int32_t x, ogg_int32_t y) {
-  return MULT32(x,y)<<2;
-}
-
 static inline ogg_int32_t MULT31_SHIFT15(ogg_int32_t x, ogg_int32_t y) {
   union magic magic;
   magic.whole  = (ogg_int64_t)x * y;
   return ((ogg_uint32_t)(magic.halves.lo)>>15) | ((magic.halves.hi)<<17);
 }
 
-static inline ogg_int32_t CLIP_TO_15(ogg_int32_t x) {
-  int ret=x;
-  ret-= ((x<=32767)-1)&(x-32767);
-  ret-= ((x>=-32768)-1)&(x+32768);
-  return(ret);
+#else
+/* 32 bit multiply, more portable but less accurate */
+
+/*
+ * Note: Precision is biased towards the first argument therefore ordering
+ * is important.  Shift values were chosen for the best sound quality after
+ * many listening tests.
+ */
+
+/*
+ * For MULT32 and MULT31: The second argument is always a lookup table
+ * value already preshifted from 31 to 8 bits.  We therefore take the 
+ * opportunity to save on text space and use unsigned char for those
+ * tables in this case.
+ */
+
+static inline ogg_int32_t MULT32(ogg_int32_t x, ogg_int32_t y) {
+  return (x >> 9) * y;  /* y preshifted >>23 */
 }
+
+static inline ogg_int32_t MULT31(ogg_int32_t x, ogg_int32_t y) {
+  return (x >> 8) * y;  /* y preshifted >>23 */
+}
+
+static inline ogg_int32_t MULT31_SHIFT15(ogg_int32_t x, ogg_int32_t y) {
+  return (x >> 6) * y;  /* y preshifted >>9 */
+}
+
+#endif
 
 /*
  * This should be used as a memory barrier, forcing all cached values in
@@ -98,15 +122,15 @@ static inline ogg_int32_t CLIP_TO_15(ogg_int32_t x) {
 
 #ifdef __i386__
 
-#define XPROD32(_a, _b, _t, _v, _x, _y)	\
-  { *(_x)= MULT32(_a,_t)+MULT32(_b,_v)    ;	\
-    *(_y)= MULT32(_b,_t)-MULT32(_a,_v)    ; }
-#define XPROD31(_a, _b, _t, _v, _x, _y)	\
-  { *(_x)=(MULT32(_a,_t)+MULT32(_b,_v))<<1;	\
-    *(_y)=(MULT32(_b,_t)-MULT32(_a,_v))<<1; }
+#define XPROD32(_a, _b, _t, _v, _x, _y)		\
+  { *(_x)=MULT32(_a,_t)+MULT32(_b,_v);		\
+    *(_y)=MULT32(_b,_t)-MULT32(_a,_v); }
+#define XPROD31(_a, _b, _t, _v, _x, _y)		\
+  { *(_x)=MULT31(_a,_t)+MULT31(_b,_v);		\
+    *(_y)=MULT31(_b,_t)-MULT31(_a,_v); }
 #define XNPROD31(_a, _b, _t, _v, _x, _y)	\
-  { *(_x)=(MULT32(_a,_t)-MULT32(_b,_v))<<1;	\
-    *(_y)=(MULT32(_b,_t)+MULT32(_a,_v))<<1; }
+  { *(_x)=MULT31(_a,_t)-MULT31(_b,_v);		\
+    *(_y)=MULT31(_b,_t)+MULT31(_a,_v); }
 
 #else
 
@@ -122,19 +146,31 @@ static inline void XPROD31(ogg_int32_t  a, ogg_int32_t  b,
 			   ogg_int32_t  t, ogg_int32_t  v,
 			   ogg_int32_t *x, ogg_int32_t *y)
 {
-  *x = (MULT32(a, t) + MULT32(b, v))<<1;
-  *y = (MULT32(b, t) - MULT32(a, v))<<1;
+  *x = MULT31(a, t) + MULT31(b, v);
+  *y = MULT31(b, t) - MULT31(a, v);
 }
 
 static inline void XNPROD31(ogg_int32_t  a, ogg_int32_t  b,
 			    ogg_int32_t  t, ogg_int32_t  v,
 			    ogg_int32_t *x, ogg_int32_t *y)
 {
-  *x = (MULT32(a, t) - MULT32(b, v))<<1;
-  *y = (MULT32(b, t) + MULT32(a, v))<<1;
+  *x = MULT31(a, t) - MULT31(b, v);
+  *y = MULT31(b, t) + MULT31(a, v);
 }
 
 #endif
+
+#endif
+
+#ifndef _V_CLIP_MATH
+#define _V_CLIP_MATH
+
+static inline ogg_int32_t CLIP_TO_15(ogg_int32_t x) {
+  int ret=x;
+  ret-= ((x<=32767)-1)&(x-32767);
+  ret-= ((x>=-32768)-1)&(x+32768);
+  return(ret);
+}
 
 #endif
 
@@ -142,8 +178,13 @@ static inline ogg_int32_t VFLOAT_MULT(ogg_int32_t a,ogg_int32_t ap,
 				      ogg_int32_t b,ogg_int32_t bp,
 				      ogg_int32_t *p){
   if(a && b){
+#ifndef _LOW_ACCURACY_
     *p=ap+bp+32;
     return MULT32(a,b);
+#else
+    *p=ap+bp+31;
+    return (a>>15)*(b>>16); 
+#endif
   }else
     return 0;
 }

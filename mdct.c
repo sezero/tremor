@@ -13,7 +13,7 @@
 
  function: normalized modified discrete cosine transform
            power of two length transform only [64 <= n ]
- last mod: $Id: mdct.c,v 1.7 2002/10/16 08:10:08 xiphmont Exp $
+ last mod: $Id: mdct.c,v 1.8 2002/10/16 09:07:00 xiphmont Exp $
 
  Original algorithm adapted long ago from _The use of multirate filter
  banks for coding of high quality digital audio_, by T. Sporer,
@@ -32,15 +32,11 @@
 
  ********************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
 #include "ivorbiscodec.h"
 #include "os.h"
+#include "misc.h"
 #include "mdct.h"
 #include "mdct_lookup.h"
-#include "misc.h"
 
 
 /* 8 point butterfly (in place) */
@@ -151,7 +147,7 @@ STIN void mdct_butterfly_32(DATA_TYPE *x){
 /* N/stage point generic N stage butterfly (in place, 2 register) */
 STIN void mdct_butterfly_generic(DATA_TYPE *x,int points,int step){
 
-  const DATA_TYPE *T   = sincos_lookup0;
+  LOOKUP_T *T   = sincos_lookup0;
   DATA_TYPE *x1        = x + points      - 8;
   DATA_TYPE *x2        = x + (points>>1) - 8;
   REG_TYPE   r0;
@@ -261,8 +257,8 @@ STIN void mdct_bitreverse(DATA_TYPE *x,int n,int step,int shift){
   int          bit   = 0;
   DATA_TYPE   *w0    = x;
   DATA_TYPE   *w1    = x = w0+(n>>1);
-  const DATA_TYPE *T = (step>=4)?(sincos_lookup0+(step>>1)):sincos_lookup1;
-  const DATA_TYPE *Ttop  = T+1024;
+  LOOKUP_T    *T = (step>=4)?(sincos_lookup0+(step>>1)):sincos_lookup1;
+  LOOKUP_T    *Ttop  = T+1024;
   DATA_TYPE    r2;
 
   do{
@@ -270,10 +266,10 @@ STIN void mdct_bitreverse(DATA_TYPE *x,int n,int step,int shift){
     DATA_TYPE *x0    = x + ((r3 ^ 0xfff)>>shift) -1;
     DATA_TYPE *x1    = x + (r3>>shift);
 
-    REG_TYPE  r0     = x1[1]  - x0[1];
-    REG_TYPE  r1     = x0[0]  + x1[0];
+    REG_TYPE  r0     = x0[0]  + x1[0];
+    REG_TYPE  r1     = x1[1]  - x0[1];
 
-	      XPROD32( T[0], T[1], r0, r1, &r2, &r3 ); T+=step;
+	      XPROD32( r0, r1, T[1], T[0], &r2, &r3 ); T+=step;
 
 	      w1    -= 4;
 
@@ -288,10 +284,10 @@ STIN void mdct_bitreverse(DATA_TYPE *x,int n,int step,int shift){
               x0     = x + ((r3 ^ 0xfff)>>shift) -1;
               x1     = x + (r3>>shift);
 
-              r0     = x1[1]  - x0[1];
-              r1     = x0[0]  + x1[0];
+              r0     = x0[0]  + x1[0];
+              r1     = x1[1]  - x0[1];
 
-	      XPROD32( T[0], T[1], r0, r1, &r2, &r3 ); T+=step;
+	      XPROD32( r0, r1, T[1], T[0], &r2, &r3 ); T+=step;
 
               r0     = (x0[1] + x1[1])>>1;
               r1     = (x0[0] - x1[0])>>1;
@@ -346,8 +342,8 @@ void mdct_backward(int n, DATA_TYPE *in, DATA_TYPE *out){
   int n4=n>>2;
   DATA_TYPE *iX;
   DATA_TYPE *oX;
-  const DATA_TYPE *T;
-  const DATA_TYPE *V;
+  LOOKUP_T *T;
+  LOOKUP_T *V;
   int shift;
   int step;
 
