@@ -141,7 +141,11 @@ void vorbis_lsp_to_curve(ogg_int32_t *curve,int n,int ln,
   int fdy=nyq-fbase*fdx;
   int map=0;
 
+#ifdef _LOW_ACCURACY_
+  ogg_uint32_t nextbark=((tBnyq1<<11)/ln)>>12;
+#else
   ogg_uint32_t nextbark=MULT31(imap>>1,tBnyq1);
+#endif
   int nextf=barklook[nextbark>>14]+(((nextbark&0x3fff)*
 	    (barklook[(nextbark>>14)+1]-barklook[nextbark>>14]))>>14);
 
@@ -301,11 +305,22 @@ void vorbis_lsp_to_curve(ogg_int32_t *curve,int n,int ln,
     while(1){
       map++;
 
-      nextbark=MULT31((map+1)*(imap>>1),tBnyq1);
-      nextf=barklook[nextbark>>14]+
-	(((nextbark&0x3fff)*
-	  (barklook[(nextbark>>14)+1]-barklook[nextbark>>14]))>>14);
-      if(f<=nextf)break;
+      if(map+1<ln){
+	
+#ifdef _LOW_ACCURACY_
+	nextbark=((tBnyq1<<11)/ln*(map+1))>>12;
+#else
+	nextbark=MULT31((map+1)*(imap>>1),tBnyq1);
+#endif
+	nextf=barklook[nextbark>>14]+
+	  (((nextbark&0x3fff)*
+	    (barklook[(nextbark>>14)+1]-barklook[nextbark>>14]))>>14);
+	if(f<=nextf)break;
+	
+      }else{
+	nextf=9999999;
+	break;
+      }
     }
     if(map>=ln){
       map=ln-1; /* guard against the approximation */      
