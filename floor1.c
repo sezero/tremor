@@ -28,9 +28,7 @@
 #define floor1_rangedB 140 /* floor 1 fixed at -140dB to 0dB range */
 
 typedef struct {
-  int sorted_index[VIF_POSIT+2];
   int forward_index[VIF_POSIT+2];
-  int reverse_index[VIF_POSIT+2];
   
   int hineighbor[VIF_POSIT];
   int loneighbor[VIF_POSIT];
@@ -151,10 +149,6 @@ static vorbis_look_floor *floor1_look(vorbis_dsp_state *vd,vorbis_info_mode *mi,
 
   /* points from sort order back to range number */
   for(i=0;i<n;i++)look->forward_index[i]=sortpointer[i]-info->postlist;
-  /* points from range order to sorted position */
-  for(i=0;i<n;i++)look->reverse_index[look->forward_index[i]]=i;
-  /* we actually need the post values too */
-  for(i=0;i<n;i++)look->sorted_index[i]=info->postlist[look->forward_index[i]];
   
   /* quantize values to multiplier spec */
   switch(info->mult){

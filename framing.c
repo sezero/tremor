@@ -166,10 +166,10 @@ static const ogg_uint32_t crc_lookup[256]={
 int ogg_stream_init(ogg_stream_state *os,int serialno){
   if(os){
     memset(os,0,sizeof(*os));
-    os->body_storage=16*1024;
+    os->body_storage=6*1024;
     os->body_data=(unsigned char *)_ogg_malloc(os->body_storage*sizeof(*os->body_data));
 
-    os->lacing_storage=1024;
+    os->lacing_storage=128;
     os->lacing_vals=(int *)_ogg_malloc(os->lacing_storage*sizeof(*os->lacing_vals));
     os->granule_vals=(ogg_int64_t *)_ogg_malloc(os->lacing_storage*sizeof(*os->granule_vals));
 
@@ -204,6 +204,17 @@ int ogg_stream_destroy(ogg_stream_state *os){
    what's happening fairly clear */
 
 static void _os_body_expand(ogg_stream_state *os,int needed){
+  /* can we shift first? */
+  if(os->body_storage<=os->body_fill+needed){
+    long br=os->body_returned;
+    
+    os->body_fill-=br;
+    if(os->body_fill)
+      memmove(os->body_data,os->body_data+br,os->body_fill);
+    os->body_returned=0;
+  }
+
+  /* still need more? */
   if(os->body_storage<=os->body_fill+needed){
     os->body_storage+=(needed+1024);
     os->body_data=(unsigned char *)_ogg_realloc(os->body_data,os->body_storage*sizeof(*os->body_data));
@@ -211,6 +222,24 @@ static void _os_body_expand(ogg_stream_state *os,int needed){
 }
 
 static void _os_lacing_expand(ogg_stream_state *os,int needed){
+
+  /* first check for a shift */
+  if(os->lacing_storage<=os->lacing_fill+needed){
+    long lr=os->lacing_returned;
+
+    /* segment table */
+    if(os->lacing_fill-lr){
+      memmove(os->lacing_vals,os->lacing_vals+lr,
+	      (os->lacing_fill-lr)*sizeof(*os->lacing_vals));
+      memmove(os->granule_vals,os->granule_vals+lr,
+	      (os->lacing_fill-lr)*sizeof(*os->granule_vals));
+    }
+    os->lacing_fill-=lr;
+    os->lacing_packet-=lr;
+    os->lacing_returned=0;
+  }
+  
+  /* not enough?  *now* realloc */
   if(os->lacing_storage<=os->lacing_fill+needed){
     os->lacing_storage+=(needed+32);
     os->lacing_vals=(int *)_ogg_realloc(os->lacing_vals,os->lacing_storage*sizeof(*os->lacing_vals));
@@ -453,7 +482,6 @@ int ogg_sync_pageout(ogg_sync_state *oy, ogg_page *og){
 
 /* add the incoming page to the stream state; we decompose the page
    into packet segments here as well. */
-
 int ogg_stream_pagein(ogg_stream_state *os, ogg_page *og){
   unsigned char *header=og->header;
   unsigned char *body=og->body;
@@ -469,33 +497,6 @@ int ogg_stream_pagein(ogg_stream_state *os, ogg_page *og){
   long pageno=ogg_page_pageno(og);
   int segments=header[26];
   
-  /* clean up 'returned data' */
-  {
-    long lr=os->lacing_returned;
-    long br=os->body_returned;
-
-    /* body data */
-    if(br>8192){
-      os->body_fill-=br;
-      if(os->body_fill)
-	memmove(os->body_data,os->body_data+br,os->body_fill);
-      os->body_returned=0;
-    }
-
-    if(lr>8192){
-      /* segment table */
-      if(os->lacing_fill-lr){
-	memmove(os->lacing_vals,os->lacing_vals+lr,
-		(os->lacing_fill-lr)*sizeof(*os->lacing_vals));
-	memmove(os->granule_vals,os->granule_vals+lr,
-		(os->lacing_fill-lr)*sizeof(*os->granule_vals));
-      }
-      os->lacing_fill-=lr;
-      os->lacing_packet-=lr;
-      os->lacing_returned=0;
-    }
-  }
-
   /* check the serial number */
   if(serialno!=os->serialno)return(-1);
   if(version>0)return(-1);
