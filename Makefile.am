@@ -12,7 +12,7 @@ libvorbisidec_la_SOURCES = mdct.c block.c window.c \
                         codebook.h misc.h mdct_lookup.h\
                         os.h mdct.h ivorbisfile.h lsp_lookup.h\
                         registry.h window.h window_lookup.h\
-                        codec_internal.h backends.h ogg.h \
+                        codec_internal.h ogg.h \
 			asm_arm.h ivorbiscodec.h
 libvorbisidec_la_LDFLAGS = -version-info @V_LIB_CURRENT@:@V_LIB_REVISION@:@V_LIB_AGE@
 

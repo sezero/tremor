@@ -12,7 +12,7 @@
  ********************************************************************
 
  function: single-block PCM synthesis
- last mod: $Id: synthesis.c,v 1.4.2.1 2003/04/09 09:43:49 xiphmont Exp $
+ last mod: $Id: synthesis.c,v 1.4.2.2 2003/04/13 09:03:09 xiphmont Exp $
 
  ********************************************************************/
 
@@ -20,7 +20,6 @@
 #include "ogg.h"
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
-#include "registry.h"
 #include "misc.h"
 #include "os.h"
 
@@ -47,7 +46,7 @@ int vorbis_synthesis(vorbis_block *vb,ogg_packet *op,int decodep){
   if(mode==-1)return(OV_EBADPACKET);
   
   vb->mode=mode;
-  vb->W=ci->mode_param[mode]->blockflag;
+  vb->W=ci->mode_param[mode].blockflag;
   if(vb->W){
     vb->lW=oggpack_read(opb,1);
     vb->nW=oggpack_read(opb,1);
@@ -70,9 +69,7 @@ int vorbis_synthesis(vorbis_block *vb,ogg_packet *op,int decodep){
       vb->pcm[i]=(ogg_int32_t *)_vorbis_block_alloc(vb,vb->pcmend*sizeof(*vb->pcm[i]));
     
     /* unpack_header enforces range checking */
-    type=ci->map_type[ci->mode_param[mode]->mapping];
-    
-    return(_mapping_P[type]->inverse(vb,b->mode[mode]));
+    return(_mapping_P[0]->inverse(vb,b->mode[mode]));
   }else{
     /* no pcm */
     vb->pcmend=0;
@@ -107,7 +104,7 @@ long vorbis_packet_blocksize(vorbis_info *vi,ogg_packet *op){
     mode=oggpack_read(&opb,modebits);
   }
   if(mode==-1)return(OV_EBADPACKET);
-  return(ci->blocksizes[ci->mode_param[mode]->blockflag]);
+  return(ci->blocksizes[ci->mode_param[mode].blockflag]);
 }
 
 

@@ -23,7 +23,6 @@
 #include "codec_internal.h"
 
 #include "window.h"
-#include "registry.h"
 #include "misc.h"
 
 static int ilog(unsigned int v){
@@ -172,10 +171,9 @@ static int _vds_init(vorbis_dsp_state *v,vorbis_info *vi){
   /* initialize all the mapping/backend lookups */
   b->mode=(vorbis_look_mapping **)_ogg_calloc(ci->modes,sizeof(*b->mode));
   for(i=0;i<ci->modes;i++){
-    int mapnum=ci->mode_param[i]->mapping;
-    int maptype=ci->map_type[mapnum];
-    b->mode[i]=_mapping_P[maptype]->look(v,ci->mode_param[i],
-					 ci->map_param[mapnum]);
+    int mapnum=ci->mode_param[i].mapping;
+    b->mode[i]=_mapping_P[0]->look(v,ci->mode_param+i,
+				   ci->map_param[mapnum]);
   }
   return(0);
 }
@@ -224,9 +222,8 @@ void vorbis_dsp_clear(vorbis_dsp_state *v){
     /* free mode lookups; these are actually vorbis_look_mapping structs */
     if(ci){
       for(i=0;i<ci->modes;i++){
-	int mapnum=ci->mode_param[i]->mapping;
-	int maptype=ci->map_type[mapnum];
-	if(b && b->mode)_mapping_P[maptype]->free_look(b->mode[i]);
+	int mapnum=ci->mode_param[i].mapping;
+	if(b && b->mode)_mapping_P[0]->free_look(b->mode[i]);
       }
     }
 

@@ -21,7 +21,6 @@
 #include "ogg.h"
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
-#include "registry.h"
 #include "codebook.h"
 #include "misc.h"
 #include "os.h"

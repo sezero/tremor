@@ -21,11 +21,11 @@
 #include "ogg.h"
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
-#include "registry.h"
 #include "codebook.h"
 #include "misc.h"
 
 #define floor1_rangedB 140 /* floor 1 fixed at -140dB to 0dB range */
+#define VIF_POSIT 63
 
 /***********************************************/
  

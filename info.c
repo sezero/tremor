@@ -25,7 +25,6 @@
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
 #include "codebook.h"
-#include "registry.h"
 #include "window.h"
 #include "misc.h"
 #include "os.h"
@@ -120,11 +119,10 @@ void vorbis_info_clear(vorbis_info *vi){
 
   if(ci){
 
-    for(i=0;i<ci->modes;i++)
-      if(ci->mode_param[i])_ogg_free(ci->mode_param[i]);
+    if(ci->mode_param)_ogg_free(ci->mode_param);
 
     for(i=0;i<ci->maps;i++) /* unpack does the range checking */
-      _mapping_P[ci->map_type[i]]->free_info(ci->map_param[i]);
+      _mapping_P[0]->free_info(ci->map_param[i]);
 
     if(ci->floor_param){
       for(i=0;i<ci->floors;i++) /* unpack does the range checking */
@@ -133,8 +131,11 @@ void vorbis_info_clear(vorbis_info *vi){
       _ogg_free(ci->floor_type);
     }
 
-    for(i=0;i<ci->residues;i++) /* unpack does the range checking */
-      _residue_P[ci->residue_type[i]]->free_info(ci->residue_param[i]);
+    if(ci->residue_param){
+      for(i=0;i<ci->residues;i++) /* unpack does the range checking */
+	res_clear_info(ci->residue_param+i);
+      _ogg_free(ci->residue_param);
+    }
 
     if(ci->book_param){
       for(i=0;i<ci->books;i++)
@@ -221,12 +222,10 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
   for(i=0;i<ci->books;i++)
     if(vorbis_book_unpack(opb,ci->book_param+i))goto err_out;
 
-  /* time backend settings */
-  ci->times=oggpack_read(opb,6)+1;
-  for(i=0;i<ci->times;i++){
-    ci->time_type[i]=oggpack_read(opb,16);
-    if(ci->time_type[i]<0 || ci->time_type[i]>=VI_TIMEB)goto err_out;
-  }
+  /* time backend settings, not actually used */
+  i=oggpack_read(opb,6);
+  for(;i>=0;i--)
+    if(oggpack_read(opb,16)!=0)goto err_out;
 
   /* floor backend settings */
   ci->floors=oggpack_read(opb,6)+1;
@@ -241,34 +240,28 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
 
   /* residue backend settings */
   ci->residues=oggpack_read(opb,6)+1;
-  for(i=0;i<ci->residues;i++){
-    ci->residue_type[i]=oggpack_read(opb,16);
-    if(ci->residue_type[i]<0 || ci->residue_type[i]>=VI_RESB)goto err_out;
-    ci->residue_param[i]=_residue_P[ci->residue_type[i]]->unpack(vi,opb);
-    if(!ci->residue_param[i])goto err_out;
-  }
+  ci->residue_param=_ogg_malloc(sizeof(*ci->residue_param)*ci->residues);
+  for(i=0;i<ci->residues;i++)
+    if(res_unpack(ci->residue_param+i,vi,opb))goto err_out;
 
   /* map backend settings */
   ci->maps=oggpack_read(opb,6)+1;
   for(i=0;i<ci->maps;i++){
-    ci->map_type[i]=oggpack_read(opb,16);
-    if(ci->map_type[i]<0 || ci->map_type[i]>=VI_MAPB)goto err_out;
-    ci->map_param[i]=_mapping_P[ci->map_type[i]]->unpack(vi,opb);
+    if(oggpack_read(opb,16)!=0)goto err_out;
+    ci->map_param[i]=_mapping_P[0]->unpack(vi,opb);
     if(!ci->map_param[i])goto err_out;
   }
   
   /* mode settings */
   ci->modes=oggpack_read(opb,6)+1;
+  ci->mode_param=
+    (vorbis_info_mode *)_ogg_malloc(ci->modes*sizeof(*ci->mode_param));
   for(i=0;i<ci->modes;i++){
-    ci->mode_param[i]=(vorbis_info_mode *)_ogg_calloc(1,sizeof(*ci->mode_param[i]));
-    ci->mode_param[i]->blockflag=oggpack_read(opb,1);
-    ci->mode_param[i]->windowtype=oggpack_read(opb,16);
-    ci->mode_param[i]->transformtype=oggpack_read(opb,16);
-    ci->mode_param[i]->mapping=oggpack_read(opb,8);
-
-    if(ci->mode_param[i]->windowtype>=VI_WINDOWB)goto err_out;
-    if(ci->mode_param[i]->transformtype>=VI_WINDOWB)goto err_out;
-    if(ci->mode_param[i]->mapping>=ci->maps)goto err_out;
+    ci->mode_param[i].blockflag=oggpack_read(opb,1);
+    if(oggpack_read(opb,16))goto err_out;
+    if(oggpack_read(opb,16))goto err_out;
+    ci->mode_param[i].mapping=oggpack_read(opb,8);
+    if(ci->mode_param[i].mapping>=ci->maps)goto err_out;
   }
   
   if(oggpack_read(opb,1)!=1)goto err_out; /* top level EOP check */

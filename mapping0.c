@@ -25,7 +25,6 @@
 #include "codec_internal.h"
 #include "codebook.h"
 #include "window.h"
-#include "registry.h"
 #include "misc.h"
 
 /* simplistic, wasteful way of doing this (unique lookup for each
@@ -41,10 +40,8 @@ typedef struct {
   vorbis_info_mode *mode;
   vorbis_info_mapping0 *map;
 
-  vorbis_look_residue **residue_look;
-
   vorbis_func_floor **floor_func;
-  vorbis_func_residue **residue_func;
+
 
   int ch;
   long lastframe; /* if a different mode is called, we need to 
@@ -64,13 +61,7 @@ static void mapping0_free_look(vorbis_look_mapping *look){
   vorbis_look_mapping0 *l=(vorbis_look_mapping0 *)look;
   if(l){
 
-    for(i=0;i<l->map->submaps;i++){
-      l->residue_func[i]->free_look(l->residue_look[i]);
-    }
-
     _ogg_free(l->floor_func);
-    _ogg_free(l->residue_func);
-    _ogg_free(l->residue_look);
     memset(l,0,sizeof(*l));
     _ogg_free(l);
   }
@@ -85,20 +76,11 @@ static vorbis_look_mapping *mapping0_look(vorbis_dsp_state *vd,vorbis_info_mode 
   vorbis_info_mapping0 *info=look->map=(vorbis_info_mapping0 *)m;
   look->mode=vm;
   
-  look->residue_look=(vorbis_look_residue **)_ogg_calloc(info->submaps,sizeof(*look->residue_look));
-
   look->floor_func=(vorbis_func_floor **)_ogg_calloc(info->submaps,sizeof(*look->floor_func));
-  look->residue_func=(vorbis_func_residue **)_ogg_calloc(info->submaps,sizeof(*look->residue_func));
   
   for(i=0;i<info->submaps;i++){
     int floornum=info->floorsubmap[i];
-    int resnum=info->residuesubmap[i];
-
     look->floor_func[i]=_floor_P[ci->floor_type[floornum]];
-    look->residue_func[i]=_residue_P[ci->residue_type[resnum]];
-    look->residue_look[i]=look->residue_func[i]->
-      look(vd,vm,ci->residue_param[resnum]);
-    
   }
 
   look->ch=vi->channels;
@@ -154,7 +136,6 @@ static vorbis_info_mapping *mapping0_unpack(vorbis_info *vi,oggpack_buffer *opb)
   }
   for(i=0;i<info->submaps;i++){
     int temp=oggpack_read(opb,8);
-    if(temp>=ci->times)goto err_out;
     info->floorsubmap[i]=oggpack_read(opb,8);
     if(info->floorsubmap[i]>=ci->floors)goto err_out;
     info->residuesubmap[i]=oggpack_read(opb,8);
@@ -220,8 +201,8 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
       }
     }
     
-    look->residue_func[i]->inverse(vb,look->residue_look[i],
-				   pcmbundle,zerobundle,ch_in_bundle);
+    res_inverse(vb,ci->residue_param+info->residuesubmap[i],
+		pcmbundle,zerobundle,ch_in_bundle);
   }
 
   //for(j=0;j<vi->channels;j++)
