@@ -21,25 +21,25 @@
 #include "ogg.h"
 
 typedef struct codebook{
-  long dim;           /* codebook dimensions (elements per vector) */
-  long entries;       /* codebook entries */
-  long used_entries;  /* populated codebook entries */
+  long  dim;             /* codebook dimensions (elements per vector) */
+  long  entries;         /* codebook entries */
+  long  used_entries;    /* populated codebook entries */
 
-  int  maptype;        /* 0=none
-			  1=implicitly populated values from map column 
-			  2=listed arbitrary values */
+  int   dec_maxlength;
+  void *dec_table;
+  int   dec_nodeb;      
+  int   dec_leafw;      
+  int   dec_type;        /* 0 = entry number
+			    1 = packed vector of values
+			    2 = packed vector of column offsets, maptype 1 
+			    3 = scalar offset into value array,  maptype 2  */
 
-  /* the below are ordered by bitreversed codeword and only used
-     entries are populated */
-  int           binarypoint;
-  ogg_int32_t  *valuelist;  /* list of dim*entries actual entry values */  
-  ogg_uint32_t *codelist;   /* list of bitstream codewords for each entry */
-
-  int          *dec_index;  
-  char         *dec_codelengths;
-  ogg_uint32_t *dec_firsttable;
-  int           dec_firsttablen;
-  int           dec_maxlength;
+  ogg_uint32_t   q_min;  
+  ogg_uint32_t   q_del;
+  int            q_seq;
+  int            q_bits;
+  int            q_pack;
+  void          *q_val;   
 
 } codebook;
 

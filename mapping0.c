@@ -194,11 +194,6 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
   int   *nonzero  =(int *)alloca(sizeof(*nonzero)*vi->channels);
   void **floormemo=(void **)alloca(sizeof(*floormemo)*vi->channels);
   
-  /* time domain information decode (note that applying the
-     information would have to happen later; we'll probably add a
-     function entry to the harness for that later */
-  /* NOT IMPLEMENTED */
-
   /* recover the spectral envelope; store it in the PCM vector for now */
   for(i=0;i<vi->channels;i++){
     int submap=info->chmuxlist[i];
@@ -239,7 +234,6 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
 
   //for(j=0;j<vi->channels;j++)
   //_analysis_output("coupled",seq+j,vb->pcm[j],-8,n/2,0,0);
-
 
   /* channel coupling */
   for(i=info->coupling_steps-1;i>=0;i--){
