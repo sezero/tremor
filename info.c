@@ -284,7 +284,7 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
    with bitstream comments and a third packet that holds the
    codebook. */
 
-int vorbis_synthesis_headerin(vorbis_info *vi,vorbis_comment *vc,ogg_packet *op){
+int vorbis_dsp_headerin(vorbis_info *vi,vorbis_comment *vc,ogg_packet *op){
   oggpack_buffer opb;
   
   if(op){

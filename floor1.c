@@ -269,23 +269,26 @@ static void render_line(int x0,int x1,int y0,int y1,ogg_int32_t *d){
   }
 }
 
+int floor1_memosize(vorbis_info_floor *i){
+  vorbis_info_floor1 *info=(vorbis_info_floor1 *)i;
+  return info->posts;
+}
+
 static int quant_look[4]={256,128,86,64};
 
-void *floor1_inverse1(vorbis_block *vb,vorbis_info_floor *in){
+ogg_int32_t *floor1_inverse1(vorbis_dsp_state *vd,vorbis_info_floor *in,
+			     ogg_int32_t *fit_value){
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)in;
-  codec_setup_info   *ci=(codec_setup_info *)vb->vd->vi->codec_setup;
+  codec_setup_info   *ci=(codec_setup_info *)vd->vi->codec_setup;
   
   int i,j,k;
   codebook *books=ci->book_param;   
   int quant_q=quant_look[info->mult-1];
 
   /* unpack wrapped/predicted values from stream */
-  if(oggpack_read(&vb->opb,1)==1){
-    int *fit_value=
-      (int *)_vorbis_block_alloc(vb,(info->posts)*sizeof(*fit_value));
-    
-    fit_value[0]=oggpack_read(&vb->opb,ilog(quant_q-1));
-    fit_value[1]=oggpack_read(&vb->opb,ilog(quant_q-1));
+  if(oggpack_read(&vd->opb,1)==1){
+    fit_value[0]=oggpack_read(&vd->opb,ilog(quant_q-1));
+    fit_value[1]=oggpack_read(&vd->opb,ilog(quant_q-1));
     
     /* partition by partition */
     /* partition by partition */
@@ -298,7 +301,7 @@ void *floor1_inverse1(vorbis_block *vb,vorbis_info_floor *in){
 
       /* decode the partition's first stage cascade value */
       if(csubbits){
-	cval=vorbis_book_decode(books+info->class[classv].class_book,&vb->opb);
+	cval=vorbis_book_decode(books+info->class[classv].class_book,&vd->opb);
 
 	if(cval==-1)goto eop;
       }
@@ -307,7 +310,7 @@ void *floor1_inverse1(vorbis_block *vb,vorbis_info_floor *in){
 	int book=info->class[classv].class_subbook[cval&(csub-1)];
 	cval>>=csubbits;
 	if(book!=0xff){
-	  if((fit_value[j+k]=vorbis_book_decode(books+book,&vb->opb))==-1)
+	  if((fit_value[j+k]=vorbis_book_decode(books+book,&vd->opb))==-1)
 	    goto eop;
 	}else{
 	  fit_value[j+k]=0;
@@ -359,17 +362,16 @@ void *floor1_inverse1(vorbis_block *vb,vorbis_info_floor *in){
   return(NULL);
 }
 
-int floor1_inverse2(vorbis_block *vb,vorbis_info_floor *in,void *memo,
-			  ogg_int32_t *out){
+int floor1_inverse2(vorbis_dsp_state *vd,vorbis_info_floor *in,
+		    ogg_int32_t *fit_value,ogg_int32_t *out){
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)in;
 
-  codec_setup_info   *ci=(codec_setup_info *)vb->vd->vi->codec_setup;
-  int                  n=ci->blocksizes[vb->W]/2;
+  codec_setup_info   *ci=(codec_setup_info *)vd->vi->codec_setup;
+  int                  n=ci->blocksizes[vd->W]/2;
   int j;
 
-  if(memo){
+  if(fit_value){
     /* render the lines */
-    int *fit_value=(int *)memo;
     int hx=0;
     int lx=0;
     int ly=fit_value[0]*info->mult;

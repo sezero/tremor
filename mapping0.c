@@ -25,63 +25,6 @@
 #include "codec_internal.h"
 #include "codebook.h"
 #include "misc.h"
-#include "window_lookup.h"
-
-static const void *_vorbis_window(int left){
-  switch(left){
-  case 32:
-    return vwin64;
-  case 64:
-    return vwin128;
-  case 128:
-    return vwin256;
-  case 256:
-    return vwin512;
-  case 512:
-    return vwin1024;
-  case 1024:
-    return vwin2048;
-  case 2048:
-    return vwin4096;
-  case 4096:
-    return vwin8192;
-  default:
-    return(0);
-  }
-}
-
-static void _vorbis_apply_window(ogg_int32_t *d,
-				 long *blocksizes,
-				 int lW,int W,int nW){
-  
-  LOOKUP_T *window[2];
-  long n=blocksizes[W];
-  long ln=blocksizes[lW];
-  long rn=blocksizes[nW];
-
-  long leftbegin=n/4-ln/4;
-  long leftend=leftbegin+ln/2;
-
-  long rightbegin=n/2+n/4-rn/4;
-  long rightend=rightbegin+rn/2;
-  
-  int i,p;
-
-  window[0]=_vorbis_window(blocksizes[0]>>1);
-  window[1]=_vorbis_window(blocksizes[1]>>1);
-
-  for(i=0;i<leftbegin;i++)
-    d[i]=0;
-
-  for(p=0;i<leftend;i++,p++)
-    d[i]=MULT31(d[i],window[lW][p]);
-
-  for(i=rightbegin,p=rn/2-1;i<rightend;i++,p--)
-    d[i]=MULT31(d[i],window[nW][p]);
-
-  for(;i<n;i++)
-    d[i]=0;
-}
 
 void mapping_clear_info(vorbis_info_mapping *info){
   if(info){
@@ -158,13 +101,12 @@ int mapping_info_unpack(vorbis_info_mapping *info,vorbis_info *vi,
   return -1;
 }
 
-int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
-  vorbis_dsp_state     *vd=vb->vd;
+int mapping_inverse(vorbis_dsp_state *vd,vorbis_info_mapping *info){
   vorbis_info          *vi=vd->vi;
   codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;
 
   int                   i,j;
-  long                  n=vb->pcmend=ci->blocksizes[vb->W];
+  long                  n=ci->blocksizes[vd->W];
 
   ogg_int32_t **pcmbundle=
     (ogg_int32_t **)alloca(sizeof(*pcmbundle)*vi->channels);
@@ -172,7 +114,7 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
     (int *)alloca(sizeof(*zerobundle)*vi->channels);
   int          *nonzero=
     (int *)alloca(sizeof(*nonzero)*vi->channels);
-  void        **floormemo=
+  ogg_int32_t **floormemo=
     (void **)alloca(sizeof(*floormemo)*vi->channels);
   
   /* recover the spectral envelope; store it in the PCM vector for now */
@@ -186,17 +128,21 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
     
     if(ci->floor_type[floorno]){
       /* floor 1 */
-      floormemo[i]=floor1_inverse1(vb,ci->floor_param[floorno]);
+      floormemo[i]=alloca(sizeof(*floormemo[i])*
+			  floor1_memosize(ci->floor_param[floorno]));
+      floormemo[i]=floor1_inverse1(vd,ci->floor_param[floorno],floormemo[i]);
     }else{
       /* floor 0 */
-      floormemo[i]=floor0_inverse1(vb,ci->floor_param[floorno]);
+      floormemo[i]=alloca(sizeof(*floormemo[i])*
+			  floor0_memosize(ci->floor_param[floorno]));
+      floormemo[i]=floor0_inverse1(vd,ci->floor_param[floorno],floormemo[i]);
     }
-
+    
     if(floormemo[i])
       nonzero[i]=1;
     else
       nonzero[i]=0;      
-    memset(vb->pcm[i],0,sizeof(*vb->pcm[i])*n/2);
+    memset(vd->work[i],0,sizeof(*vd->work[i])*n/2);
   }
 
   /* channel coupling can 'dirty' the nonzero listing */
@@ -217,11 +163,11 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
 	  zerobundle[ch_in_bundle]=1;
 	else
 	  zerobundle[ch_in_bundle]=0;
-	pcmbundle[ch_in_bundle++]=vb->pcm[j];
+	pcmbundle[ch_in_bundle++]=vd->work[j];
       }
     }
     
-    res_inverse(vb,ci->residue_param+info->submaplist[i].residue,
+    res_inverse(vd,ci->residue_param+info->submaplist[i].residue,
 		pcmbundle,zerobundle,ch_in_bundle);
   }
 
@@ -230,8 +176,8 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
 
   /* channel coupling */
   for(i=info->coupling_steps-1;i>=0;i--){
-    ogg_int32_t *pcmM=vb->pcm[info->coupling[i].mag];
-    ogg_int32_t *pcmA=vb->pcm[info->coupling[i].ang];
+    ogg_int32_t *pcmM=vd->work[info->coupling[i].mag];
+    ogg_int32_t *pcmA=vd->work[info->coupling[i].ang];
     
     for(j=0;j<n/2;j++){
       ogg_int32_t mag=pcmM[j];
@@ -261,7 +207,7 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
 
   /* compute and apply spectral envelope */
   for(i=0;i<vi->channels;i++){
-    ogg_int32_t *pcm=vb->pcm[i];
+    ogg_int32_t *pcm=vd->work[i];
     int submap=0;
     int floorno;
 
@@ -271,10 +217,10 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
 
     if(ci->floor_type[floorno]){
       /* floor 1 */
-      floor1_inverse2(vb,ci->floor_param[floorno],floormemo[i],pcm);
+      floor1_inverse2(vd,ci->floor_param[floorno],floormemo[i],pcm);
     }else{
       /* floor 0 */
-      floor0_inverse2(vb,ci->floor_param[floorno],floormemo[i],pcm);
+      floor0_inverse2(vd,ci->floor_param[floorno],floormemo[i],pcm);
     }
   }
 
@@ -283,27 +229,11 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
 
   /* transform the PCM data; takes PCM vector, vb; modifies PCM vector */
   /* only MDCT right now.... */
-  for(i=0;i<vi->channels;i++){
-    ogg_int32_t *pcm=vb->pcm[i];
-    mdct_backward(n,pcm,pcm);
-  }
+  for(i=0;i<vi->channels;i++)
+    mdct_backward(n,vd->work[i]);
 
   //for(j=0;j<vi->channels;j++)
   //_analysis_output("imdct",seq+j,vb->pcm[j],-24,n,0,0);
-
-  /* window the data */
-  for(i=0;i<vi->channels;i++){
-    ogg_int32_t *pcm=vb->pcm[i];
-    if(nonzero[i])
-      _vorbis_apply_window(pcm,ci->blocksizes,vb->lW,vb->W,vb->nW);
-    else
-      for(j=0;j<n;j++)
-	pcm[j]=0;
-    
-  }
-
-  //for(j=0;j<vi->channels;j++)
-  //_analysis_output("window",seq+j,vb->pcm[j],-24,n,0,0);
 
   /* all done! */
   return(0);

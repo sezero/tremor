@@ -88,11 +88,11 @@ int res_unpack(vorbis_info_residue *info,
   return 1;
 }
 
-int res_inverse(vorbis_block *vb,vorbis_info_residue *info,
+int res_inverse(vorbis_dsp_state *vd,vorbis_info_residue *info,
 		ogg_int32_t **in,int *nonzero,int ch){
   
   int i,j,k,s,used=0;
-  codec_setup_info     *ci=(codec_setup_info *)vb->vd->vi->codec_setup;
+  codec_setup_info     *ci=(codec_setup_info *)vd->vi->codec_setup;
   codebook *phrasebook=ci->book_param+info->groupbook;
   int samples_per_partition=info->grouping;
   int partitions_per_word=phrasebook->dim;
@@ -128,8 +128,8 @@ int res_inverse(vorbis_block *vb,vorbis_info_residue *info,
 		partword[j][i+k]=partword[j-1][i+k];
 	    
 	    for(j=0;j<ch;j++){
-	      int temp=vorbis_book_decode(phrasebook,&vb->opb);
-	      if(oggpack_eop(&vb->opb))goto eopbreak;
+	      int temp=vorbis_book_decode(phrasebook,&vd->opb);
+	      if(oggpack_eop(&vd->opb))goto eopbreak;
 	      
 	      /* this can be done quickly in assembly due to the quotient
 		 always being at most six bits */
@@ -150,11 +150,11 @@ int res_inverse(vorbis_block *vb,vorbis_info_residue *info,
 		codebook *stagebook=ci->book_param+
 		  info->stagebooks[(partword[j][i]<<3)+s];
 		if(info->type){
-		  if(vorbis_book_decodev_add(stagebook,in[j]+offset,&vb->opb,
+		  if(vorbis_book_decodev_add(stagebook,in[j]+offset,&vd->opb,
 					     samples_per_partition,-8)==-1)
 		    goto eopbreak;
 		}else{
-		  if(vorbis_book_decodevs_add(stagebook,in[j]+offset,&vb->opb,
+		  if(vorbis_book_decodevs_add(stagebook,in[j]+offset,&vd->opb,
 					      samples_per_partition,-8)==-1)
 		    goto eopbreak;
 		}
@@ -184,8 +184,8 @@ int res_inverse(vorbis_block *vb,vorbis_info_residue *info,
 	    partword[i+k]=partword[i+k+1]*info->partitions;
 	  
 	  /* fetch the partition word */
-	  temp=vorbis_book_decode(phrasebook,&vb->opb);
-	  if(oggpack_eop(&vb->opb))goto eopbreak;
+	  temp=vorbis_book_decode(phrasebook,&vd->opb);
+	  if(oggpack_eop(&vd->opb))goto eopbreak;
 	  
 	  /* this can be done quickly in assembly due to the quotient
 	     always being at most six bits */
@@ -203,7 +203,7 @@ int res_inverse(vorbis_block *vb,vorbis_info_residue *info,
 	      info->stagebooks[(partword[i]<<3)+s];
 	    if(vorbis_book_decodevv_add(stagebook,in,
 					i*samples_per_partition+beginoff,ch,
-					&vb->opb,
+					&vd->opb,
 					samples_per_partition,-8)==-1)
 	      goto eopbreak;
 	  }

@@ -4,8 +4,7 @@ INCLUDES = -I./
 
 lib_LTLIBRARIES = libvorbisidec.la
 
-libvorbisidec_la_SOURCES = mdct.c block.c \
-                        synthesis.c info.c misc.c \
+libvorbisidec_la_SOURCES = mdct.c dsp.c info.c misc.c \
                         floor1.c floor0.c vorbisfile.c \
                         res012.c mapping0.c codebook.c \
 			framing.c bitwise.c \

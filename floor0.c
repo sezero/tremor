@@ -365,25 +365,29 @@ vorbis_info_floor *floor0_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
   return(NULL);
 }
 
-void *floor0_inverse1(vorbis_block *vb,vorbis_info_floor *i){
+int floor0_memosize(vorbis_info_floor *i){
+  vorbis_info_floor0 *info=(vorbis_info_floor0 *)i;
+  return info->order+1;
+}
+
+ogg_int32_t *floor0_inverse1(vorbis_dsp_state *vd,vorbis_info_floor *i,
+			     ogg_int32_t *lsp){
   vorbis_info_floor0 *info=(vorbis_info_floor0 *)i;
   int j,k;
   
-  int ampraw=oggpack_read(&vb->opb,info->ampbits);
+  int ampraw=oggpack_read(&vd->opb,info->ampbits);
   if(ampraw>0){ /* also handles the -1 out of data case */
     long maxval=(1<<info->ampbits)-1;
     int amp=((ampraw*info->ampdB)<<4)/maxval;
-    int booknum=oggpack_read(&vb->opb,_ilog(info->numbooks));
+    int booknum=oggpack_read(&vd->opb,_ilog(info->numbooks));
     
     if(booknum!=-1 && booknum<info->numbooks){ /* be paranoid */
-      codec_setup_info  *ci=(codec_setup_info *)vb->vd->vi->codec_setup;
+      codec_setup_info  *ci=(codec_setup_info *)vd->vi->codec_setup;
       codebook *b=ci->book_param+info->books[booknum];
       ogg_int32_t last=0;
-      ogg_int32_t *lsp=
-	(ogg_int32_t *)_vorbis_block_alloc(vb,sizeof(*lsp)*(info->order+1));
             
       for(j=0;j<info->order;j+=b->dim)
-	if(vorbis_book_decodev_set(b,lsp+j,&vb->opb,b->dim,-24)==-1)goto eop;
+	if(vorbis_book_decodev_set(b,lsp+j,&vd->opb,b->dim,-24)==-1)goto eop;
       for(j=0;j<info->order;){
 	for(k=0;k<b->dim;k++,j++)lsp[j]+=last;
 	last=lsp[j-1];
@@ -397,21 +401,21 @@ void *floor0_inverse1(vorbis_block *vb,vorbis_info_floor *i){
   return(NULL);
 }
 
-int floor0_inverse2(vorbis_block *vb,vorbis_info_floor *i,
-			   void *memo,ogg_int32_t *out){
+int floor0_inverse2(vorbis_dsp_state *vd,vorbis_info_floor *i,
+			   ogg_int32_t *lsp,ogg_int32_t *out){
   vorbis_info_floor0 *info=(vorbis_info_floor0 *)i;
+  codec_setup_info  *ci=(codec_setup_info *)vd->vi->codec_setup;
   
-  if(memo){
-    ogg_int32_t *lsp=(ogg_int32_t *)memo;
+  if(lsp){
     ogg_int32_t amp=lsp[info->order];
 
     /* take the coefficients back to a spectral envelope curve */
-    vorbis_lsp_to_curve(out,vb->pcmend/2,info->barkmap,
+    vorbis_lsp_to_curve(out,ci->blocksizes[vd->W]/2,info->barkmap,
 			lsp,info->order,amp,info->ampdB,
 			info->rate>>1);
     return(1);
   }
-  memset(out,0,sizeof(*out)*vb->pcmend/2);
+  memset(out,0,sizeof(*out)*ci->blocksizes[vd->W]/2);
   return(0);
 }
 

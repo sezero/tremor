@@ -79,7 +79,6 @@ typedef struct OggVorbis_File {
   ogg_stream_state *os; /* take physical pages, weld into a logical
                           stream of packets */
   vorbis_dsp_state *vd; /* central working state for the packet->PCM decoder */
-  vorbis_block     *vb; /* local working space for packet->PCM decode */
 
   ov_callbacks callbacks;
 
@@ -118,7 +117,7 @@ extern ogg_int64_t ov_time_tell(OggVorbis_File *vf);
 extern vorbis_info *ov_info(OggVorbis_File *vf,int link);
 extern vorbis_comment *ov_comment(OggVorbis_File *vf,int link);
 
-extern long ov_read(OggVorbis_File *vf,char *buffer,int length,
+extern long ov_read(OggVorbis_File *vf,void *buffer,int length,
 		    int *bitstream);
 
 #ifdef __cplusplus
