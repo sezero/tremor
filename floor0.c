@@ -26,6 +26,7 @@
 #include "os.h"
 
 #define LSP_FRACBITS 14
+extern const ogg_int32_t FLOOR_fromdB_LOOKUP[];
 
 /*************** LSP decode ********************/
 
@@ -48,6 +49,21 @@ static inline ogg_int32_t vorbis_invsqlook_i(long a,long e){
 
 /* interpolated lookup based fromdB function, domain -140dB to 0dB only */
 /* a is in n.12 format */
+#ifdef _LOW_ACCURACY_
+static inline ogg_int32_t vorbis_fromdBlook_i(long a){
+  if(a>0) return 0x7fffffff;
+  if(a<(-140<<12)) return 0;
+  return FLOOR_fromdB_LOOKUP[((a+140)*467)>>20]<<9;
+}
+#else
+static inline ogg_int32_t vorbis_fromdBlook_i(long a){
+  if(a>0) return 0x7fffffff;
+  if(a<(-140<<12)) return 0;
+  return FLOOR_fromdB_LOOKUP[((a+(140<<12))*467)>>20];
+}
+#endif
+
+#if 0
 static inline ogg_int32_t vorbis_fromdBlook_i(long a){
   int i=(-a)>>(12-FROMdB2_SHIFT);
   if(i<0) return 0x7fffffff;
@@ -55,6 +71,7 @@ static inline ogg_int32_t vorbis_fromdBlook_i(long a){
   
   return FROMdB_LOOKUP[i>>FROMdB_SHIFT] * FROMdB2_LOOKUP[i&FROMdB2_MASK];
 }
+#endif
 
 /* interpolated lookup based cos function, domain 0 to PI only */
 /* a is in 0.16 format, where 0==0, 2^^16-1==PI, return 0.14 */

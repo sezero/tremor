@@ -147,27 +147,6 @@ void oggpack_adv(oggpack_buffer *b,int bits){
   if((b->headend-=bits/8)<1)_span(b);
 }
 
-/* spans forward and finds next byte.  Never halts */
-static void _span_one(oggpack_buffer *b){
-  while(b->headend<1){
-    if(b->head->next){
-      b->count+=b->head->length;
-      b->head=b->head->next;
-      b->headptr=b->head->buffer->data+b->head->begin; 
-      b->headend=b->head->length;      
-    }else
-      break;
-  }
-}
-
-static int _halt_one(oggpack_buffer *b){
-  if(b->headend<1){
-    _adv_halt(b);
-    return -1;
-  }
-  return 0;
-}
-
 int oggpack_eop(oggpack_buffer *b){
   if(b->headend<0)return -1;
   return 0;
@@ -175,83 +154,9 @@ int oggpack_eop(oggpack_buffer *b){
 
 /* bits <= 32 */
 long oggpack_read(oggpack_buffer *b,int bits){
-  unsigned long m=mask[bits];
-  ogg_uint32_t ret;
-
-  bits+=b->headbit;
-
-  if(bits >= b->headend<<3){
-
-    if(b->headend<0)return -1;
-    
-    if(bits){
-      if (_halt_one(b)) return -1;
-      ret=*b->headptr>>b->headbit;
-      
-      if(bits>=8){
-        ++b->headptr;
-        --b->headend;
-        _span_one(b);
-        if(bits>8){
-          if (_halt_one(b)) return -1;
-          ret|=*b->headptr<<(8-b->headbit);   
-          
-          if(bits>=16){
-            ++b->headptr;
-            --b->headend;
-            _span_one(b);
-            if(bits>16){
-              if (_halt_one(b)) return -1;
-              ret|=*b->headptr<<(16-b->headbit);  
-              
-              if(bits>=24){
-                ++b->headptr;
-                --b->headend;
-                _span_one(b);
-                if(bits>24){
-                  if (_halt_one(b)) return -1;
-                  ret|=*b->headptr<<(24-b->headbit);
-                  
-                  if(bits>=32){
-                    ++b->headptr;
-                    --b->headend;
-                    _span_one(b);
-                    if(bits>32){
-                      if (_halt_one(b)) return -1;
-                      if(b->headbit)ret|=*b->headptr<<(32-b->headbit);
-                      
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }else{
-  
-    ret=b->headptr[0]>>b->headbit;
-    if(bits>8){
-      ret|=b->headptr[1]<<(8-b->headbit);  
-      if(bits>16){
-        ret|=b->headptr[2]<<(16-b->headbit);  
-        if(bits>24){
-          ret|=b->headptr[3]<<(24-b->headbit);  
-          if(bits>32 && b->headbit){
-            ret|=b->headptr[4]<<(32-b->headbit);
-          }
-        }
-      }
-    }
-    
-    b->headptr+=bits/8;
-    b->headend-=bits/8;
-  }
-
-  ret&=m;
-  b->headbit=bits&7;   
-  return ret;
+  long ret=oggpack_look(b,bits);
+  oggpack_adv(b,bits);
+  return(ret);
 }
 
 long oggpack_bytes(oggpack_buffer *b){
