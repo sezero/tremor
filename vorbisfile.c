@@ -1287,7 +1287,7 @@ ogg_int64_t ov_time_tell(OggVorbis_File *vf){
     }
   }
 
-  return(time_total+(vf->pcm_offset-pcm_total)/vf->vi[link].rate*1000);
+  return(time_total+(1000*vf->pcm_offset-pcm_total)/vf->vi[link].rate);
 }
 
 /*  link:   -1) return the vorbis_info struct for the bitstream section
