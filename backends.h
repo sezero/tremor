@@ -55,24 +55,25 @@ typedef struct{
 #define VIF_POSIT 63
 #define VIF_CLASS 16
 #define VIF_PARTS 31
+
 typedef struct{
-  int   partitions;                /* 0 to 31 */
-  int   partitionclass[VIF_PARTS]; /* 0 to 15 */
+  char  class_dim;        /* 1 to 8 */
+  char  class_subs;       /* 0,1,2,3 (bits: 1<<n poss) */
+  unsigned char  class_book;       /* subs ^ dim entries */
+  unsigned char  class_subbook[8]; /* [VIF_CLASS][subs] */
+} floor1class;  
 
-  int   class_dim[VIF_CLASS];        /* 1 to 8 */
-  int   class_subs[VIF_CLASS];       /* 0,1,2,3 (bits: 1<<n poss) */
-  int   class_book[VIF_CLASS];       /* subs ^ dim entries */
-  int   class_subbook[VIF_CLASS][8]; /* [VIF_CLASS][subs] */
+typedef struct{
+  floor1class  *class;          /* [VIF_CLASS] */
+  char         *partitionclass; /* [VIF_PARTS]; 0 to 15 */
+  ogg_uint16_t *postlist;       /* [VIF_POSIT+2]; first two implicit */ 
+  char         *forward_index;  /* [VIF_POSIT+2]; */
+  char         *hineighbor;     /* [VIF_POSIT]; */
+  char         *loneighbor;     /* [VIF_POSIT]; */
 
-
-  int          mult;                      /* 1 2 3 or 4 */ 
-  ogg_uint16_t postlist[VIF_POSIT+2];     /* first two implicit */ 
-
-  /* useful, generated values */
-  char         forward_index[VIF_POSIT+2];
-  char         hineighbor[VIF_POSIT];
-  char         loneighbor[VIF_POSIT];
+  int          partitions;    /* 0 to 31 */
   int          posts;
+  int          mult;          /* 1 2 3 or 4 */ 
 
 } vorbis_info_floor1;
 

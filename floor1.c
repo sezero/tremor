@@ -32,6 +32,12 @@
 static void floor1_free_info(vorbis_info_floor *i){
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)i;
   if(info){
+    if(info->class)_ogg_free(info->class);
+    if(info->partitionclass)_ogg_free(info->partitionclass);
+    if(info->postlist)_ogg_free(info->postlist);
+    if(info->forward_index)_ogg_free(info->forward_index);
+    if(info->hineighbor)_ogg_free(info->hineighbor);
+    if(info->loneighbor)_ogg_free(info->loneighbor);
     memset(info,0,sizeof(*info));
     _ogg_free(info);
   }
@@ -58,24 +64,27 @@ static vorbis_info_floor *floor1_unpack (vorbis_info *vi,oggpack_buffer *opb){
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)_ogg_calloc(1,sizeof(*info));
   /* read partitions */
   info->partitions=oggpack_read(opb,5); /* only 0 to 31 legal */
+  info->partitionclass=
+    (char *)_ogg_malloc(info->partitions*sizeof(*info->partitionclass));
   for(j=0;j<info->partitions;j++){
     info->partitionclass[j]=oggpack_read(opb,4); /* only 0 to 15 legal */
     if(maxclass<info->partitionclass[j])maxclass=info->partitionclass[j];
   }
 
   /* read partition classes */
+  info->class=
+    (floor1class *)_ogg_malloc((maxclass+1)*sizeof(*info->class));
   for(j=0;j<maxclass+1;j++){
-    info->class_dim[j]=oggpack_read(opb,3)+1; /* 1 to 8 */
-    info->class_subs[j]=oggpack_read(opb,2); /* 0,1,2,3 bits */
-    if(info->class_subs[j]<0)
-      goto err_out;
-    if(info->class_subs[j])info->class_book[j]=oggpack_read(opb,8);
-    if(info->class_book[j]<0 || info->class_book[j]>=ci->books)
-      goto err_out;
-    for(k=0;k<(1<<info->class_subs[j]);k++){
-      info->class_subbook[j][k]=oggpack_read(opb,8)-1;
-      if(info->class_subbook[j][k]<-1 || info->class_subbook[j][k]>=ci->books)
-	goto err_out;
+    info->class[j].class_dim=oggpack_read(opb,3)+1; /* 1 to 8 */
+    info->class[j].class_subs=oggpack_read(opb,2); /* 0,1,2,3 bits */
+    if(oggpack_eop(opb)<0) goto err_out;
+    if(info->class[j].class_subs)
+      info->class[j].class_book=oggpack_read(opb,8);
+    if(info->class[j].class_book>=ci->books)goto err_out;
+    for(k=0;k<(1<<info->class[j].class_subs);k++){
+      info->class[j].class_subbook[k]=oggpack_read(opb,8)-1;
+      if(info->class[j].class_subbook[k]>=ci->books &&
+	 info->class[j].class_subbook[k]!=0xff)goto err_out;
     }
   }
 
@@ -83,14 +92,26 @@ static vorbis_info_floor *floor1_unpack (vorbis_info *vi,oggpack_buffer *opb){
   info->mult=oggpack_read(opb,2)+1;     /* only 1,2,3,4 legal now */ 
   rangebits=oggpack_read(opb,4);
 
+  for(j=0,k=0;j<info->partitions;j++)
+    count+=info->class[info->partitionclass[j]].class_dim; 
+  info->postlist=
+    (ogg_uint16_t *)_ogg_malloc((count+2)*sizeof(*info->postlist));
+  info->forward_index=
+    (char *)_ogg_malloc((count+2)*sizeof(*info->forward_index));
+  info->loneighbor=
+    (char *)_ogg_malloc(count*sizeof(*info->loneighbor));
+  info->hineighbor=
+    (char *)_ogg_malloc(count*sizeof(*info->hineighbor));
+
+  count=0;
   for(j=0,k=0;j<info->partitions;j++){
-    count+=info->class_dim[info->partitionclass[j]]; 
+    count+=info->class[info->partitionclass[j]].class_dim; 
     for(;k<count;k++){
       int t=info->postlist[k+2]=oggpack_read(opb,rangebits);
-      if(t<0 || t>=(1<<rangebits))
-	goto err_out;
+      if(t>=(1<<rangebits))goto err_out;
     }
   }
+  if(oggpack_eop(opb))goto err_out;
   info->postlist[0]=0;
   info->postlist[1]=1<<rangebits;
   info->posts=count+2;
@@ -270,22 +291,22 @@ static void *floor1_inverse1(vorbis_block *vb,vorbis_info_floor *in){
     /* partition by partition */
     for(i=0,j=2;i<info->partitions;i++){
       int classv=info->partitionclass[i];
-      int cdim=info->class_dim[classv];
-      int csubbits=info->class_subs[classv];
+      int cdim=info->class[classv].class_dim;
+      int csubbits=info->class[classv].class_subs;
       int csub=1<<csubbits;
       int cval=0;
 
       /* decode the partition's first stage cascade value */
       if(csubbits){
-	cval=vorbis_book_decode(books+info->class_book[classv],&vb->opb);
+	cval=vorbis_book_decode(books+info->class[classv].class_book,&vb->opb);
 
 	if(cval==-1)goto eop;
       }
 
       for(k=0;k<cdim;k++){
-	int book=info->class_subbook[classv][cval&(csub-1)];
+	int book=info->class[classv].class_subbook[cval&(csub-1)];
 	cval>>=csubbits;
-	if(book>=0){
+	if(book!=0xff){
 	  if((fit_value[j+k]=vorbis_book_decode(books+book,&vb->opb))==-1)
 	    goto eop;
 	}else{
