@@ -109,13 +109,13 @@ int mapping_inverse(vorbis_dsp_state *vd,vorbis_info_mapping *info){
   long                  n=ci->blocksizes[vd->W];
 
   ogg_int32_t **pcmbundle=
-    (ogg_int32_t **)alloca(sizeof(*pcmbundle)*vi->channels);
+    alloca(sizeof(*pcmbundle)*vi->channels);
   int          *zerobundle=
-    (int *)alloca(sizeof(*zerobundle)*vi->channels);
+    alloca(sizeof(*zerobundle)*vi->channels);
   int          *nonzero=
-    (int *)alloca(sizeof(*nonzero)*vi->channels);
+    alloca(sizeof(*nonzero)*vi->channels);
   ogg_int32_t **floormemo=
-    (void **)alloca(sizeof(*floormemo)*vi->channels);
+    alloca(sizeof(*floormemo)*vi->channels);
   
   /* recover the spectral envelope; store it in the PCM vector for now */
   for(i=0;i<vi->channels;i++){
