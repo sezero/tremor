@@ -66,24 +66,11 @@ long oggpack_look(oggpack_buffer *b,int bits){
   return(m&ret);
 }
 
-long oggpack_look1(oggpack_buffer *b){
-  if(b->endbyte>=b->storage)return(-1);
-  return((b->ptr[0]>>b->endbit)&1);
-}
-
 void oggpack_adv(oggpack_buffer *b,int bits){
   bits+=b->endbit;
   b->ptr+=bits/8;
   b->endbyte+=bits/8;
   b->endbit=bits&7;
-}
-
-void oggpack_adv1(oggpack_buffer *b){
-  if(++(b->endbit)>7){
-    b->endbit=0;
-    b->ptr++;
-    b->endbyte++;
-  }
 }
 
 /* bits <= 32 */
@@ -119,28 +106,6 @@ long oggpack_read(oggpack_buffer *b,int bits){
   b->ptr+=bits/8;
   b->endbyte+=bits/8;
   b->endbit=bits&7;
-  return(ret);
-}
-
-long oggpack_read1(oggpack_buffer *b){
-  unsigned long ret;
-  
-  if(b->endbyte>=b->storage){
-    /* not the main path */
-    ret=-1UL;
-    goto overflow;
-  }
-
-  ret=(b->ptr[0]>>b->endbit)&1;
-  
- overflow:
-
-  b->endbit++;
-  if(b->endbit>7){
-    b->endbit=0;
-    b->ptr++;
-    b->endbyte++;
-  }
   return(ret);
 }
 
