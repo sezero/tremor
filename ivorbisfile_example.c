@@ -21,8 +21,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <vorbis/ivorbiscodec.h>
-#include <vorbis/ivorbisfile.h>
+#include "ivorbiscodec.h"
+#include "ivorbisfile.h"
 
 #ifdef _WIN32 /* We need the following two to set stdin/stdout to binary */
 #include <io.h>
