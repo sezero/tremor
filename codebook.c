@@ -47,7 +47,7 @@ static ogg_uint32_t decpack(long entry,long used_entry,long quantvals,
 
   case 1:
     if(maptype==1){
-      /* vals are already read into temporary colum vector here */
+      /* vals are already read into temporary column vector here */
       for(j=0;j<b->dim;j++){
 	ogg_uint32_t off=entry%quantvals;
 	entry/=quantvals;
@@ -98,6 +98,12 @@ static ogg_int32_t _float32_unpack(long val,int *point){
 /* choose the smallest supported node size that fits our decode table.
    Legal bytewidths are 1/1 1/2 2/2 2/4 4/4 */
 static int _determine_node_bytes(long used, int leafwidth){
+
+  /* special case small books to size 4 to avoid multiple special
+     cases in repack */
+  if(used<2)
+    return 4;
+
   if(leafwidth==3)leafwidth=4;
   if(_ilog(3*used-6)+1 <= leafwidth*4) 
     return leafwidth/2?leafwidth/2:1;
@@ -183,17 +189,23 @@ static int _make_decode_table(codebook *s,char *lengthlist,long quantvals,
 			      oggpack_buffer *opb,int maptype){
   int i;
   ogg_uint32_t *work;
-  if(s->dec_nodeb==4)
-    work=s->dec_table=_ogg_malloc((s->used_entries*2-2)*4);
-  else
-    work=alloca((s->used_entries*2-2)*sizeof(*work));
 
+
+  if(s->dec_nodeb==4){
+    s->dec_table=_ogg_malloc((s->used_entries*2+1)*sizeof(*work));
+    /* +1 (rather than -2) is to accommodate 0 and 1 sized books,
+       which are specialcased to nodeb==4 */
+    if(_make_words(lengthlist,s->entries,
+		   s->dec_table,quantvals,s,opb,maptype))return 1;
+    
+    return 0;
+  }
+
+  work=alloca((s->used_entries*2-2)*sizeof(*work));
   if(_make_words(lengthlist,s->entries,work,quantvals,s,opb,maptype))return 1;
-  if(s->dec_nodeb==4) return 0;
-
   s->dec_table=_ogg_malloc((s->used_entries*(s->dec_leafw+1)-2)*
 			   s->dec_nodeb);
-    
+  
   if(s->dec_leafw==1){
     switch(s->dec_nodeb){
     case 1:
@@ -391,7 +403,7 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
     break;
   default:
     /* EOF */
-    return(-1);
+    goto _eofout;
   }
 
 

@@ -53,6 +53,37 @@ static int ilog(unsigned int v){
   return(ret);
 }
 
+static void mergesort(ogg_uint16_t *index,ogg_uint16_t *vals,ogg_uint16_t n){
+  ogg_uint16_t i,j;
+  ogg_uint16_t *temp,*A=index,*B=_ogg_alloc(0,n*sizeof(*B));
+
+  for(i=1;i<n;i<<=1){
+    for(j=0;j+i<n;){
+      int k1=j;
+      int mid=j+i;
+      int k2=mid;
+      int end=(j+i*2<n?j+i*2:n);
+      while(k1<mid && k2<end){
+	if(vals[A[k1]]<vals[A[k2]])
+	  B[j++]=A[k1++];
+	else
+	  B[j++]=A[k2++];
+      }
+      while(k1<mid) B[j++]=A[k1++];
+      while(k2<end) B[j++]=A[k2++];
+    }
+    for(;j<n;j++)B[j]=A[j];
+    temp=A;A=B;B=temp;
+  }
+ 
+  if(B==index){
+    for(j=0;j<n;j++)B[j]=A[j];
+    _ogg_free(A);
+  }else
+    _ogg_free(B);
+}
+
+
 static int icomp(const void *a,const void *b){
   return(**(ogg_uint16_t **)a-**(ogg_uint16_t **)b);
 }
@@ -60,7 +91,6 @@ static int icomp(const void *a,const void *b){
 vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
   codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;
   int j,k,count=0,maxclass=-1,rangebits;
-  ogg_uint16_t *sortpointer[VIF_POSIT+2];
   
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)_ogg_calloc(1,sizeof(*info));
   /* read partitions */
@@ -79,8 +109,11 @@ vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
     info->class[j].class_dim=oggpack_read(opb,3)+1; /* 1 to 8 */
     info->class[j].class_subs=oggpack_read(opb,2); /* 0,1,2,3 bits */
     if(oggpack_eop(opb)<0) goto err_out;
-    if(info->class[j].class_subs)
+    if(info->class[j].class_subs){
       info->class[j].class_book=oggpack_read(opb,8);
+      if(info->class[j].class_book>=ci->books)goto err_out;
+    }else
+      info->class[j].class_book=0;
     if(info->class[j].class_book>=ci->books)goto err_out;
     for(k=0;k<(1<<info->class[j].class_subs);k++){
       info->class[j].class_subbook[k]=oggpack_read(opb,8)-1;
@@ -118,12 +151,8 @@ vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
   info->posts=count+2;
 
   /* also store a sorted position index */
-  for(j=0;j<info->posts;j++)sortpointer[j]=info->postlist+j;
-  qsort(sortpointer,info->posts,sizeof(*sortpointer),icomp);
-
-  /* points from sort order back to range number */
-  for(j=0;j<info->posts;j++)
-    info->forward_index[j]=sortpointer[j]-info->postlist;
+  for(j=0;j<info->posts;j++)info->forward_index[j]=j;
+  mergesort(info->forward_index,info->postlist,info->posts);
   
   /* discover our neighbors for decode where we don't use fit flags
      (that would push the neighbors outward) */
