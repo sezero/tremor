@@ -17,7 +17,7 @@
 
 
 /* {sin(2*i*PI/4096), cos(2*i*PI/4096)}, with i = 0 to 512 */
-static ogg_int32_t sincos_lookup0[1026] = {
+static const ogg_int32_t sincos_lookup0[1026] = {
   0x00000000, 0x7fffffff, 0x003243f5, 0x7ffff621, 0x006487e3, 0x7fffd886,
   0x0096cbc1, 0x7fffa72c, 0x00c90f88, 0x7fff6216, 0x00fb5330, 0x7fff0943,
   0x012d96b1, 0x7ffe9cb2, 0x015fda03, 0x7ffe1c65, 0x01921d20, 0x7ffd885a,
@@ -192,7 +192,7 @@ static ogg_int32_t sincos_lookup0[1026] = {
 };
 
 /* {sin((2*i+1)*PI/4096), cos((2*i+1)*PI/4096)}, with i = 0 to 511 */
-static ogg_int32_t sincos_lookup1[1024] = {
+static const ogg_int32_t sincos_lookup1[1024] = {
   0x001921fb, 0x7ffffd88, 0x004b65ee, 0x7fffe9cb, 0x007da9d4, 0x7fffc251,
   0x00afeda8, 0x7fff8719, 0x00e23160, 0x7fff3824, 0x011474f6, 0x7ffed572,
   0x0146b860, 0x7ffe5f03, 0x0178fb99, 0x7ffdd4d7, 0x01ab3e97, 0x7ffd36ee,

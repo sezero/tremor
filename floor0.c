@@ -94,7 +94,7 @@ static inline ogg_int32_t vorbis_coslook2_i(long a){
   return(a);
 }
 
-static int barklook[28]={
+static const int barklook[28]={
   0,100,200,301,          405,516,635,766,
   912,1077,1263,1476,     1720,2003,2333,2721,
   3184,3742,4428,5285,    6376,7791,9662,12181,
@@ -117,21 +117,21 @@ static inline ogg_int32_t toBARK(int n){
   }
 }
 
-static int MLOOP_1[64]={
+static const int MLOOP_1[64]={
    0,10,11,11, 12,12,12,12, 13,13,13,13, 13,13,13,13,
   14,14,14,14, 14,14,14,14, 14,14,14,14, 14,14,14,14,
   15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
   15,15,15,15, 15,15,15,15, 15,15,15,15, 15,15,15,15,
 };
 
-static int MLOOP_2[64]={
+static const int MLOOP_2[64]={
   0,4,5,5, 6,6,6,6, 7,7,7,7, 7,7,7,7,
   8,8,8,8, 8,8,8,8, 8,8,8,8, 8,8,8,8,
   9,9,9,9, 9,9,9,9, 9,9,9,9, 9,9,9,9,
   9,9,9,9, 9,9,9,9, 9,9,9,9, 9,9,9,9,
 };
 
-static int MLOOP_3[8]={0,1,2,2,3,3,3,3};
+static const int MLOOP_3[8]={0,1,2,2,3,3,3,3};
 
 void vorbis_lsp_to_curve(ogg_int32_t *curve,int *map,int n,int ln,
 			 ogg_int32_t *lsp,int m,

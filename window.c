@@ -20,7 +20,7 @@
 #include "os.h"
 #include "misc.h"
 
-static ogg_int32_t vwin64[32]={
+static const ogg_int32_t vwin64[32]={
   0x001f0003, 0x01168c98, 0x030333c8, 0x05dfe3a4, 
   0x09a49562, 0x0e45df18, 0x13b47ef2, 0x19dcf676, 
   0x20a74d83, 0x27f7137c, 0x2fabb05a, 0x37a11059, 
@@ -31,7 +31,7 @@ static ogg_int32_t vwin64[32]={
   0x7fdd78a4, 0x7ff6ec6c, 0x7ffed0e8, 0x7ffffc3e, 
 };
 
-static ogg_int32_t vwin128[64]={
+static const ogg_int32_t vwin128[64]={
   0x0007c04d, 0x0045bb89, 0x00c18b87, 0x017ae294, 
   0x02714a4e, 0x03a4217a, 0x05129952, 0x06bbb24f, 
   0x089e38a1, 0x0ab8c073, 0x0d09a228, 0x0f8ef6bd, 
@@ -50,7 +50,7 @@ static ogg_int32_t vwin128[64]={
   0x7ffdcf38, 0x7fff6dab, 0x7fffed00, 0x7fffffc3, 
 };
 
-static ogg_int32_t vwin256[128]={
+static const ogg_int32_t vwin256[128]={
   0x0001f018, 0x00117066, 0x00306e9e, 0x005ee5f1, 
   0x009ccf26, 0x00ea208b, 0x0146cdea, 0x01b2c87f, 
   0x022dfedf, 0x02b85ced, 0x0351cbbd, 0x03fa317f, 
@@ -85,7 +85,7 @@ static ogg_int32_t vwin256[128]={
   0x7fffdcd1, 0x7ffff6d5, 0x7ffffecf, 0x7ffffffb, 
 };
 
-static ogg_int32_t vwin512[256]={
+static const ogg_int32_t vwin512[256]={
   0x00007c06, 0x00045c32, 0x000c1c62, 0x0017bc4c, 
   0x00273b7a, 0x003a9955, 0x0051d51c, 0x006cede7, 
   0x008be2a9, 0x00aeb22a, 0x00d55b0d, 0x00ffdbcc, 
@@ -152,7 +152,7 @@ static ogg_int32_t vwin512[256]={
   0x7ffffdcc, 0x7fffff6c, 0x7fffffec, 0x7fffffff, 
   };
 
-static ogg_int32_t vwin1024[512]={
+static const ogg_int32_t vwin1024[512]={
   0x00001f02, 0x0001170e, 0x00030724, 0x0005ef40, 
   0x0009cf59, 0x000ea767, 0x0014775e, 0x001b3f2e, 
   0x0022fec8, 0x002bb618, 0x00356508, 0x00400b81, 
@@ -283,7 +283,7 @@ static ogg_int32_t vwin1024[512]={
   0x7fffffdc, 0x7ffffff6, 0x7ffffffe, 0x7fffffff, 
 };
 
-static ogg_int32_t vwin2048[1024]={
+static const ogg_int32_t vwin2048[1024]={
   0x000007c0, 0x000045c4, 0x0000c1ca, 0x00017bd3, 
   0x000273de, 0x0003a9eb, 0x00051df9, 0x0006d007, 
   0x0008c014, 0x000aee1e, 0x000d5a25, 0x00100428, 
@@ -542,7 +542,7 @@ static ogg_int32_t vwin2048[1024]={
   0x7ffffffd, 0x7ffffffe, 0x7fffffff, 0x7fffffff, 
 };
 
-static ogg_int32_t vwin4096[2048]={
+static const ogg_int32_t vwin4096[2048]={
   0x000001f0, 0x00001171, 0x00003072, 0x00005ef5, 
   0x00009cf8, 0x0000ea7c, 0x00014780, 0x0001b405, 
   0x0002300b, 0x0002bb91, 0x00035698, 0x0004011e, 
@@ -1057,7 +1057,7 @@ static ogg_int32_t vwin4096[2048]={
   0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff, 
 };
 
-static ogg_int32_t vwin8192[4096]={
+static const ogg_int32_t vwin8192[4096]={
   0x0000007c, 0x0000045c, 0x00000c1d, 0x000017bd, 
   0x0000273e, 0x00003a9f, 0x000051e0, 0x00006d02, 
   0x00008c03, 0x0000aee5, 0x0000d5a7, 0x00010049, 
@@ -2084,7 +2084,7 @@ static ogg_int32_t vwin8192[4096]={
   0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff, 
 };
 
-ogg_int32_t *_vorbis_window(int type, int left){
+const ogg_int32_t *_vorbis_window(int type, int left){
 
   switch(type){
   case 0:
@@ -2115,9 +2115,10 @@ ogg_int32_t *_vorbis_window(int type, int left){
   }
 }
 
-void _vorbis_apply_window(ogg_int32_t *d,ogg_int32_t *window[2],long *blocksizes,
+void _vorbis_apply_window(ogg_int32_t *d,const ogg_int32_t *window[2],
+			  long *blocksizes,
 			  int lW,int W,int nW){
-
+  
   long n=blocksizes[W];
   long ln=blocksizes[lW];
   long rn=blocksizes[nW];

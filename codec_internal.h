@@ -39,7 +39,7 @@ typedef void vorbis_info_mapping;
 
 typedef struct private_state {
   /* local lookup storage */
-  ogg_int32_t               *window[2];
+  const ogg_int32_t      *window[2];
 
   /* backend lookups are tied to the mode, not the backend or naked mapping */
   int                     modebits;

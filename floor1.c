@@ -216,7 +216,7 @@ static int render_point(int x0,int x1,int y0,int y1,int x){
   }
 }
 
-static ogg_int32_t FLOOR_fromdB_LOOKUP[256]={
+static const ogg_int32_t FLOOR_fromdB_LOOKUP[256]={
   0x000000e5, 0x000000f4, 0x00000103, 0x00000114,
   0x00000126, 0x00000139, 0x0000014e, 0x00000163,
   0x0000017a, 0x00000193, 0x000001ad, 0x000001c9,

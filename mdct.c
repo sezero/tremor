@@ -13,7 +13,7 @@
 
  function: normalized modified discrete cosine transform
            power of two length transform only [64 <= n ]
- last mod: $Id: mdct.c,v 1.6 2002/10/16 07:39:56 xiphmont Exp $
+ last mod: $Id: mdct.c,v 1.7 2002/10/16 08:10:08 xiphmont Exp $
 
  Original algorithm adapted long ago from _The use of multirate filter
  banks for coding of high quality digital audio_, by T. Sporer,
@@ -151,7 +151,7 @@ STIN void mdct_butterfly_32(DATA_TYPE *x){
 /* N/stage point generic N stage butterfly (in place, 2 register) */
 STIN void mdct_butterfly_generic(DATA_TYPE *x,int points,int step){
 
-  DATA_TYPE *T         = sincos_lookup0;
+  const DATA_TYPE *T   = sincos_lookup0;
   DATA_TYPE *x1        = x + points      - 8;
   DATA_TYPE *x2        = x + (points>>1) - 8;
   REG_TYPE   r0;
@@ -261,8 +261,8 @@ STIN void mdct_bitreverse(DATA_TYPE *x,int n,int step,int shift){
   int          bit   = 0;
   DATA_TYPE   *w0    = x;
   DATA_TYPE   *w1    = x = w0+(n>>1);
-  DATA_TYPE   *T     = (step>=4)?(sincos_lookup0+(step>>1)):sincos_lookup1;
-  DATA_TYPE   *Ttop  = T+1024;
+  const DATA_TYPE *T = (step>=4)?(sincos_lookup0+(step>>1)):sincos_lookup1;
+  const DATA_TYPE *Ttop  = T+1024;
   DATA_TYPE    r2;
 
   do{
@@ -346,8 +346,8 @@ void mdct_backward(int n, DATA_TYPE *in, DATA_TYPE *out){
   int n4=n>>2;
   DATA_TYPE *iX;
   DATA_TYPE *oX;
-  DATA_TYPE *T;
-  DATA_TYPE *V;
+  const DATA_TYPE *T;
+  const DATA_TYPE *V;
   int shift;
   int step;
 
