@@ -6,7 +6,7 @@
  * GOVERNED BY A BSD-STYLE SOURCE LICENSE INCLUDED WITH THIS SOURCE *
  * IN 'COPYING'. PLEASE READ THESE TERMS BEFORE DISTRIBUTING.       *
  *                                                                  *
- * THE OggVorbis 'TREMOR' SOURCE CODE IS (C) COPYRIGHT 1994-2002    *
+ * THE OggVorbis 'TREMOR' SOURCE CODE IS (C) COPYRIGHT 1994-2003    *
  * BY THE Xiph.Org FOUNDATION http://www.xiph.org/                  *
  *                                                                  *
  ********************************************************************
@@ -80,7 +80,7 @@ static vorbis_info_floor *floor1_unpack (vorbis_info *vi,oggpack_buffer *opb){
   }
 
   /* read the post list */
-  info->mult=oggpack_read(opb,2);     /* only 0,1,2,3 legal now */ 
+  info->mult=oggpack_read(opb,2)+1;     /* only 1,2,3,4 legal now */ 
   rangebits=oggpack_read(opb,4);
 
   for(j=0,k=0;j<info->partitions;j++){
@@ -256,7 +256,7 @@ static void *floor1_inverse1(vorbis_block *vb,vorbis_info_floor *in){
   
   int i,j,k;
   codebook *books=ci->book_param;   
-  int quant_q=quant_look[info->mult];
+  int quant_q=quant_look[info->mult-1];
 
   /* unpack wrapped/predicted values from stream */
   if(oggpack_read(&vb->opb,1)==1){

@@ -15,6 +15,7 @@
 
  ********************************************************************/
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -418,7 +419,7 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
     s->dec_nodeb=_determine_node_bytes(s->used_entries,_ilog(s->entries)/8+1); 
     s->dec_leafw=_determine_leaf_words(s->dec_nodeb,_ilog(s->entries)/8+1); 
     s->dec_type=0;
-    
+
     if(_make_decode_table(s,lengthlist,quantvals,opb,maptype)) goto _errout;
     break;
 
@@ -529,6 +530,11 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
 
   if(oggpack_eop(opb))goto _eofout;
   
+  fprintf(stderr,"%d/%d x%d b%d dec_type%d (%d/%d)\n",
+	  s->used_entries,s->entries,s->dim,s->q_bits,s->dec_type,
+	  s->dec_nodeb*8,s->dec_nodeb*s->dec_leafw*8);
+  
+
   return 0;
  _errout:
  _eofout:

@@ -6,7 +6,7 @@
  * GOVERNED BY A BSD-STYLE SOURCE LICENSE INCLUDED WITH THIS SOURCE *
  * IN 'COPYING'. PLEASE READ THESE TERMS BEFORE DISTRIBUTING.       *
  *                                                                  *
- * THE OggVorbis 'TREMOR' SOURCE CODE IS (C) COPYRIGHT 1994-2002    *
+ * THE OggVorbis 'TREMOR' SOURCE CODE IS (C) COPYRIGHT 1994-2003    *
  * BY THE Xiph.Org FOUNDATION http://www.xiph.org/                  *
  *                                                                  *
  ********************************************************************
@@ -83,17 +83,6 @@ static const ogg_int32_t barklook[28]={
   15624,20397,27087,36554
 };
 
-static const ogg_uint32_t barklook_igap[27]={
-  21474836, 21474836, 21262214, 20648881,
-  19346700, 18046081, 16393005, 14708792,
-  13015052, 11545611, 10082083, 8801162,
-  7588281,  6507526,  5534752,  4638194,
-  3848537,  3130443,  2505815,  1968363,
-  1517656,  1147773,  852514,   623725,
-  449923,   320999,   226839
-};
-
-
 /* used in init only; interpolate the long way */
 static inline ogg_int32_t toBARK(int n){
   int i;
@@ -103,7 +92,8 @@ static inline ogg_int32_t toBARK(int n){
   if(i==27){
     return 27<<15;
   }else{
-    return (i<<15)+(((n-barklook[i])*barklook_igap[i])>>16);
+    return (i<<15)+(((n-barklook[i])*  
+		     ((1<<31)/(barklook[i+1]-barklook[i])))>>16);
   }
 }
 
