@@ -82,8 +82,7 @@ typedef struct codec_setup_info {
   vorbis_info_floor      *floor_param[64];
   int                     residue_type[64];
   vorbis_info_residue    *residue_param[64];
-  static_codebook        *book_param[256];
-  codebook               *fullbooks;
+  codebook               *book_param;
 
   int    passlimit[32];     /* iteration limit per couple/quant pass */
   int    coupling_passes;

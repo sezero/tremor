@@ -5,10 +5,10 @@ INCLUDES = -I./
 lib_LTLIBRARIES = libvorbisidec.la
 
 libvorbisidec_la_SOURCES = mdct.c block.c window.c \
-                        synthesis.c info.c \
+                        synthesis.c info.c misc.c \
                         floor1.c floor0.c vorbisfile.c \
                         res012.c mapping0.c registry.c codebook.c \
-			sharedbook.c framing.c bitwise.c \
+			framing.c bitwise.c \
                         codebook.h misc.h mdct_lookup.h\
                         os.h mdct.h ivorbisfile.h lsp_lookup.h\
                         registry.h window.h window_lookup.h\

@@ -158,17 +158,6 @@ static int _vds_init(vorbis_dsp_state *v,vorbis_info *vi){
   b->window[0]=_vorbis_window(0,ci->blocksizes[0]/2);
   b->window[1]=_vorbis_window(0,ci->blocksizes[1]/2);
 
-  /* finish the codebooks */
-  if(!ci->fullbooks){
-    ci->fullbooks=(codebook *)_ogg_calloc(ci->books,sizeof(*ci->fullbooks));
-    for(i=0;i<ci->books;i++){
-      vorbis_book_init_decode(ci->fullbooks+i,ci->book_param[i]);
-      /* decode codebooks are now standalone after init */
-      vorbis_staticbook_destroy(ci->book_param[i]);
-      ci->book_param[i]=NULL;
-    }
-  }
-
   v->pcm_storage=ci->blocksizes[1];
   v->pcm=(ogg_int32_t **)_ogg_malloc(vi->channels*sizeof(*v->pcm));
   v->pcmret=(ogg_int32_t **)_ogg_malloc(vi->channels*sizeof(*v->pcmret));

@@ -313,7 +313,7 @@ static void *floor1_inverse1(vorbis_block *vb,vorbis_look_floor *in){
   codec_setup_info   *ci=(codec_setup_info *)vb->vd->vi->codec_setup;
   
   int i,j,k;
-  codebook *books=ci->fullbooks;   
+  codebook *books=ci->book_param;   
   
   /* unpack wrapped/predicted values from stream */
   if(oggpack_read(&vb->opb,1)==1){

@@ -390,7 +390,7 @@ static void *floor0_inverse1(vorbis_block *vb,vorbis_look_floor *i){
     
     if(booknum!=-1 && booknum<info->numbooks){ /* be paranoid */
       codec_setup_info  *ci=(codec_setup_info *)vb->vd->vi->codec_setup;
-      codebook *b=ci->fullbooks+info->books[booknum];
+      codebook *b=ci->book_param+info->books[booknum];
       ogg_int32_t last=0;
       ogg_int32_t *lsp=(ogg_int32_t *)_vorbis_block_alloc(vb,sizeof(*lsp)*(look->m+1));
             

@@ -131,8 +131,8 @@ vorbis_look_residue *res0_look(vorbis_dsp_state *vd,vorbis_info_mode *vm,
   look->map=vm->mapping;
 
   look->parts=info->partitions;
-  look->fullbooks=ci->fullbooks;
-  look->phrasebook=ci->fullbooks+info->groupbook;
+  look->fullbooks=ci->book_param;
+  look->phrasebook=ci->book_param+info->groupbook;
   dim=look->phrasebook->dim;
 
   look->partbooks=(codebook ***)_ogg_calloc(look->parts,sizeof(*look->partbooks));
@@ -144,7 +144,7 @@ vorbis_look_residue *res0_look(vorbis_dsp_state *vd,vorbis_info_mode *vm,
       look->partbooks[j]=(codebook **)_ogg_calloc(stages,sizeof(*look->partbooks[j]));
       for(k=0;k<stages;k++)
 	if(info->secondstages[j]&(1<<k)){
-	  look->partbooks[j][k]=ci->fullbooks+info->booklist[acc++];
+	  look->partbooks[j][k]=ci->book_param+info->booklist[acc++];
 #ifdef TRAIN_RES
 	  look->training_data[k][j]=calloc(look->partbooks[j][k]->entries,
 					   sizeof(***look->training_data));

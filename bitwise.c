@@ -20,6 +20,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include "misc.h"
 #include "ogg.h"
 
 static unsigned long mask[]=
