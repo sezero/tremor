@@ -34,12 +34,14 @@ typedef struct codebook{
 			    2 = packed vector of column offsets, maptype 1 
 			    3 = scalar offset into value array,  maptype 2  */
 
-  ogg_uint32_t   q_min;  
-  ogg_uint32_t   q_del;
-  int            q_seq;
-  int            q_bits;
-  int            q_pack;
-  void          *q_val;   
+  ogg_int32_t q_min;  
+  int         q_minp;  
+  ogg_int32_t q_del;
+  int         q_delp;
+  int         q_seq;
+  int         q_bits;
+  int         q_pack;
+  void       *q_val;   
 
 } codebook;
 
