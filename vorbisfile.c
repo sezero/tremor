@@ -12,7 +12,7 @@
  ********************************************************************
 
  function: stdio-based convenience library for opening/seeking/decoding
- last mod: $Id: vorbisfile.c,v 1.6 2003/03/30 23:40:56 xiphmont Exp $
+ last mod: $Id: vorbisfile.c,v 1.6.2.1 2003/04/09 09:43:49 xiphmont Exp $
 
  ********************************************************************/
 
@@ -668,6 +668,11 @@ static int _ov_open1(void *f,OggVorbis_File *vf,char *initial,
   int ret;
 
   memset(vf,0,sizeof(*vf));
+
+  /* Tremor assumes in multiple places that right shift of a signed
+     integer is an arithmetic shift */
+  if( (-1>>1) != -1) return OV_EIMPL;
+
   vf->datasource=f;
   vf->callbacks = callbacks;
 

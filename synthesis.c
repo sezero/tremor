@@ -12,7 +12,7 @@
  ********************************************************************
 
  function: single-block PCM synthesis
- last mod: $Id: synthesis.c,v 1.4 2003/03/29 03:07:21 xiphmont Exp $
+ last mod: $Id: synthesis.c,v 1.4.2.1 2003/04/09 09:43:49 xiphmont Exp $
 
  ********************************************************************/
 
@@ -78,7 +78,7 @@ int vorbis_synthesis(vorbis_block *vb,ogg_packet *op,int decodep){
     vb->pcmend=0;
     vb->pcm=NULL;
     
-    return(0);
+    return 0;
   }
 }
 
