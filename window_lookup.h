@@ -1055,6 +1055,8 @@ static LOOKUP_T vwin4096[2048] = {
   X(0x7fffffff), X(0x7fffffff), X(0x7fffffff), X(0x7fffffff),
 };
 
+#ifndef LIMIT_TO_64kHz
+
 static LOOKUP_T vwin8192[4096] = {
   X(0x0000007c), X(0x0000045c), X(0x00000c1d), X(0x000017bd),
   X(0x0000273e), X(0x00003a9f), X(0x000051e0), X(0x00006d02),
@@ -2082,3 +2084,4 @@ static LOOKUP_T vwin8192[4096] = {
   X(0x7fffffff), X(0x7fffffff), X(0x7fffffff), X(0x7fffffff),
 };
 
+#endif

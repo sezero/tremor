@@ -101,9 +101,9 @@ static LOOKUP_T *_vorbis_window(int left){
     return vwin1024;
   case 1024:
     return vwin2048;
-#ifndef LIMIT_TO_64kHz
   case 2048:
     return vwin4096;
+#ifndef LIMIT_TO_64kHz
   case 4096:
     return vwin8192;
 #endif

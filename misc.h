@@ -20,7 +20,7 @@
 #include "ivorbiscodec.h"
 #include "os_types.h"
 
-#define _VDBG_GRAPHFILE "_0.m"
+/*#define _VDBG_GRAPHFILE "_0.m"*/
 
 
 #ifdef _VDBG_GRAPHFILE

@@ -173,6 +173,12 @@ static int _vorbis_unpack_info(vorbis_info *vi,oggpack_buffer *opb){
   ci->blocksizes[0]=1<<oggpack_read(opb,4);
   ci->blocksizes[1]=1<<oggpack_read(opb,4);
   
+#ifdef LIMIT_TO_64kHz
+  if(vi->rate>=64000 || ci->blocksizes[1]>4096)goto err_out;
+#else
+  if(vi->rate<64000 && ci->blocksizes[1]>4096)goto err_out;
+#endif
+
   if(vi->rate<1)goto err_out;
   if(vi->channels<1)goto err_out;
   if(ci->blocksizes[0]<64)goto err_out; 
