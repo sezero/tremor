@@ -13,7 +13,7 @@
 
  function: normalized modified discrete cosine transform
            power of two length transform only [64 <= n ]
- last mod: $Id: mdct.c,v 1.8 2002/10/16 09:07:00 xiphmont Exp $
+ last mod: $Id: mdct.c,v 1.9 2002/10/16 09:17:39 xiphmont Exp $
 
  Original algorithm adapted long ago from _The use of multirate filter
  banks for coding of high quality digital audio_, by T. Sporer,
@@ -425,16 +425,16 @@ void mdct_backward(int n, DATA_TYPE *in, DATA_TYPE *out){
 
 	  t0 += (v0 = (*V++)>>1);
 	  t1 += (v1 = (*V++)>>1);
-	  XPROD31( iX[0], -iX[1], t0, t1, &oX1[3], &oX2[0] ); T+=step;
+	  XPROD31( iX[0], -iX[1], t0, t1, &oX1[3], &oX2[0] );
 	  v0 += (t0 = (*T++)>>1);
 	  v1 += (t1 = (*T++)>>1);
-	  XPROD31( iX[2], -iX[3], v0, v1, &oX1[2], &oX2[1] ); T+=step;
+	  XPROD31( iX[2], -iX[3], v0, v1, &oX1[2], &oX2[1] );
 	  t0 += (v0 = (*V++)>>1);
 	  t1 += (v1 = (*V++)>>1);
-	  XPROD31( iX[4], -iX[5], t0, t1, &oX1[1], &oX2[2] ); T+=step;
+	  XPROD31( iX[4], -iX[5], t0, t1, &oX1[1], &oX2[2] );
 	  v0 += (t0 = (*T++)>>1);
 	  v1 += (t1 = (*T++)>>1);
-	  XPROD31( iX[6], -iX[7], v0, v1, &oX1[0], &oX2[3] ); T+=step;
+	  XPROD31( iX[6], -iX[7], v0, v1, &oX1[0], &oX2[3] );
 
 	  oX2+=4;
 	  iX+=8;
@@ -456,19 +456,19 @@ void mdct_backward(int n, DATA_TYPE *in, DATA_TYPE *out){
 	  v1  = *V++;
 	  t0 +=  (q0 = (v0-t0)>>2);
 	  t1 +=  (q1 = (v1-t1)>>2);
-	  XPROD31( iX[0], -iX[1], t0, t1, &oX1[3], &oX2[0] ); T+=step;
+	  XPROD31( iX[0], -iX[1], t0, t1, &oX1[3], &oX2[0] );
 	  t0  = v0-q0;
 	  t1  = v1-q1;
-	  XPROD31( iX[2], -iX[3], t0, t1, &oX1[2], &oX2[1] ); T+=step;
+	  XPROD31( iX[2], -iX[3], t0, t1, &oX1[2], &oX2[1] );
 
 	  t0  = *T++;
 	  t1  = *T++;
 	  v0 += (q0 = (t0-v0)>>2);
 	  v1 += (q1 = (t1-v1)>>2);
-	  XPROD31( iX[4], -iX[5], v0, v1, &oX1[1], &oX2[2] ); T+=step;
+	  XPROD31( iX[4], -iX[5], v0, v1, &oX1[1], &oX2[2] );
 	  v0  = t0-q0;
 	  v1  = t1-q1;
-	  XPROD31( iX[6], -iX[7], v0, v1, &oX1[0], &oX2[3] ); T+=step;
+	  XPROD31( iX[6], -iX[7], v0, v1, &oX1[0], &oX2[3] );
 
 	  oX2+=4;
 	  iX+=8;
