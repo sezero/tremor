@@ -117,9 +117,9 @@ COMPILE = $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CF
 LTCOMPILE = $(LIBTOOL) --mode=compile $(CC) $(DEFS) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
 CCLD = $(CC)
 LINK = $(LIBTOOL) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(LDFLAGS) -o $@
-DIST_COMMON =  README Makefile.am Makefile.in aclocal.m4 config.guess \
-config.sub configure configure.in install-sh ltmain.sh missing \
-mkinstalldirs
+DIST_COMMON =  README COPYING Makefile.am Makefile.in aclocal.m4 \
+config.guess config.sub configure configure.in install-sh ltmain.sh \
+missing mkinstalldirs
 
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
@@ -416,6 +416,10 @@ uninstall-am uninstall all-redirect all-am all installdirs \
 mostlyclean-generic distclean-generic clean-generic \
 maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
+
+example:
+	ln -s . vorbis
+	$(MAKE) ivorbisfile_example
 
 debug:
 	$(MAKE) all CFLAGS="@DEBUG@" LDFLAGS="-lefence"	

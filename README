@@ -36,9 +36,11 @@ is similar enough that the proper header file to include is named
 'ivorbisfile.h' [included in the source build directory].  Lower level
 libvorbis-style headers and structures are in 'ivorbiscodec.h'
 [included in the source build directory]. A simple example program,
-ivorbisfile_example.c, can be built with 'make ivorbisfile_example'.
+ivorbisfile_example.c, can be built with 'make example'.
 
-[More documentation to come]
+                           ********
+
+Detailed Tremor API Documentation begins at doc/index.html
 
 Monty
 xiph.org

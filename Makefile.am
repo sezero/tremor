@@ -23,6 +23,10 @@ ivorbisfile_example_SOURCES = ivorbisfile_example.c
 ivorbisfile_example_LDFLAGS = -static 
 ivorbisfile_example_LDADD = libvorbisidec.la
 
+example:
+	ln -s . vorbis
+	$(MAKE) ivorbisfile_example
+
 debug:
 	$(MAKE) all CFLAGS="@DEBUG@" LDFLAGS="-lefence"	
 
