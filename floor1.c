@@ -29,7 +29,7 @@
 
 /***********************************************/
  
-static void floor1_free_info(vorbis_info_floor *i){
+void floor1_free_info(vorbis_info_floor *i){
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)i;
   if(info){
     if(info->class)_ogg_free(info->class);
@@ -56,7 +56,7 @@ static int icomp(const void *a,const void *b){
   return(**(int **)a-**(int **)b);
 }
 
-static vorbis_info_floor *floor1_unpack (vorbis_info *vi,oggpack_buffer *opb){
+vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
   codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;
   int j,k,count=0,maxclass=-1,rangebits;
   ogg_uint16_t *sortpointer[VIF_POSIT+2];
@@ -271,7 +271,7 @@ static void render_line(int x0,int x1,int y0,int y1,ogg_int32_t *d){
 
 static int quant_look[4]={256,128,86,64};
 
-static void *floor1_inverse1(vorbis_block *vb,vorbis_info_floor *in){
+void *floor1_inverse1(vorbis_block *vb,vorbis_info_floor *in){
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)in;
   codec_setup_info   *ci=(codec_setup_info *)vb->vd->vi->codec_setup;
   
@@ -359,7 +359,7 @@ static void *floor1_inverse1(vorbis_block *vb,vorbis_info_floor *in){
   return(NULL);
 }
 
-static int floor1_inverse2(vorbis_block *vb,vorbis_info_floor *in,void *memo,
+int floor1_inverse2(vorbis_block *vb,vorbis_info_floor *in,void *memo,
 			  ogg_int32_t *out){
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)in;
 
@@ -393,10 +393,3 @@ static int floor1_inverse2(vorbis_block *vb,vorbis_info_floor *in,void *memo,
   memset(out,0,sizeof(*out)*n);
   return(0);
 }
-
-/* export hooks */
-vorbis_func_floor floor1_exportbundle={
-  &floor1_unpack,&floor1_free_info,
-  &floor1_inverse1,&floor1_inverse2
-};
-

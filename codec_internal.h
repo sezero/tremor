@@ -19,6 +19,7 @@
 #define _V_CODECI_H_
 
 #include "codebook.h"
+#include "ivorbiscodec.h"
 
 #define VI_TRANSFORMB 1
 #define VI_WINDOWB 1
@@ -28,16 +29,20 @@
 #define VI_MAPB 1
 
 typedef void vorbis_info_floor;
-typedef void vorbis_info_mapping;
 
 /* Floor backend generic *****************************************/
-typedef struct{
-  vorbis_info_floor     *(*unpack)(vorbis_info *,oggpack_buffer *);
-  void (*free_info) (vorbis_info_floor *);
-  void *(*inverse1)  (struct vorbis_block *,vorbis_info_floor *);
-  int   (*inverse2)  (struct vorbis_block *,vorbis_info_floor *,
-		     void *buffer,ogg_int32_t *);
-} vorbis_func_floor;
+
+extern vorbis_info_floor *floor0_info_unpack(vorbis_info *,oggpack_buffer *);
+extern void floor0_free_info(vorbis_info_floor *);
+extern void *floor0_inverse1(struct vorbis_block *,vorbis_info_floor *);
+extern int floor0_inverse2 (struct vorbis_block *,vorbis_info_floor *,
+			    void *buffer,ogg_int32_t *);
+
+extern vorbis_info_floor *floor1_info_unpack(vorbis_info *,oggpack_buffer *);
+extern void floor1_free_info(vorbis_info_floor *);
+extern void *floor1_inverse1(struct vorbis_block *,vorbis_info_floor *);
+extern int floor1_inverse2 (struct vorbis_block *,vorbis_info_floor *,
+			    void *buffer,ogg_int32_t *);
 
 typedef struct{
   int   order;
@@ -105,18 +110,7 @@ typedef struct {
 
 /* Mapping backend generic *****************************************/
 
-typedef void vorbis_look_mapping;
-
-typedef struct{
-  vorbis_info_mapping *(*unpack)(vorbis_info *,oggpack_buffer *);
-  vorbis_look_mapping *(*look)  (vorbis_dsp_state *,vorbis_info_mode *,
-				 vorbis_info_mapping *);
-  void (*free_info)    (vorbis_info_mapping *);
-  void (*free_look)    (vorbis_look_mapping *);
-  int  (*inverse)      (struct vorbis_block *vb,vorbis_look_mapping *);
-} vorbis_func_mapping;
-
-typedef struct vorbis_info_mapping0{
+typedef struct vorbis_info_mapping{
   int   submaps;  /* <= 16 */
   int   chmuxlist[256];   /* up to 256 channels in a Vorbis stream */
   
@@ -129,19 +123,12 @@ typedef struct vorbis_info_mapping0{
   int   coupling_steps;
   int   coupling_mag[256];
   int   coupling_ang[256];
-} vorbis_info_mapping0;
+} vorbis_info_mapping;
 
-typedef struct private_state {
-  /* local lookup storage */
-  const void             *window[2];
-
-  /* backend lookups are tied to the mode, not the backend or naked mapping */
-  int                     modebits;
-  vorbis_look_mapping   **mode;
-
-  ogg_int64_t sample_count;
-
-} private_state;
+extern int mapping_info_unpack(vorbis_info_mapping *,vorbis_info *,
+			       oggpack_buffer *);
+extern void mapping_clear_info(vorbis_info_mapping *);
+extern int mapping_inverse(struct vorbis_block *vb,vorbis_info_mapping *);
 
 /* codec_setup_info contains all the setup information specific to the
    specific compression/decompression mode in progress (eg,
@@ -168,15 +155,12 @@ typedef struct codec_setup_info {
   int        books;
 
   vorbis_info_mode       *mode_param;
-  vorbis_info_mapping    *map_param[64];
+  vorbis_info_mapping    *map_param;
   char                   *floor_type;
   vorbis_info_floor     **floor_param;
   vorbis_info_residue    *residue_param;
   codebook               *book_param;
 
 } codec_setup_info;
-
-extern vorbis_func_floor     *_floor_P[];
-extern vorbis_func_mapping   *_mapping_P[];
 
 #endif

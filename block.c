@@ -21,19 +21,7 @@
 #include "ogg.h"
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
-
-#include "window.h"
 #include "misc.h"
-
-static int ilog(unsigned int v){
-  int ret=0;
-  if(v)--v;
-  while(v){
-    ret++;
-    v>>=1;
-  }
-  return(ret);
-}
 
 /* pcm accumulator examples (not exhaustive):
 
@@ -145,17 +133,9 @@ int vorbis_block_clear(vorbis_block *vb){
 static int _vds_init(vorbis_dsp_state *v,vorbis_info *vi){
   int i;
   codec_setup_info *ci=(codec_setup_info *)vi->codec_setup;
-  private_state *b=NULL;
-
   memset(v,0,sizeof(*v));
-  b=(private_state *)(v->backend_state=_ogg_calloc(1,sizeof(*b)));
 
   v->vi=vi;
-  b->modebits=ilog(ci->modes);
-
-  /* Vorbis I uses only window type 0 */
-  b->window[0]=_vorbis_window(0,ci->blocksizes[0]/2);
-  b->window[1]=_vorbis_window(0,ci->blocksizes[1]/2);
 
   v->pcm_storage=ci->blocksizes[1];
   v->pcm=(ogg_int32_t **)_ogg_malloc(vi->channels*sizeof(*v->pcm));
@@ -168,13 +148,6 @@ static int _vds_init(vorbis_dsp_state *v,vorbis_info *vi){
   v->lW=0; /* previous window size */
   v->W=0;  /* current window size */
 
-  /* initialize all the mapping/backend lookups */
-  b->mode=(vorbis_look_mapping **)_ogg_calloc(ci->modes,sizeof(*b->mode));
-  for(i=0;i<ci->modes;i++){
-    int mapnum=ci->mode_param[i].mapping;
-    b->mode[i]=_mapping_P[0]->look(v,ci->mode_param+i,
-				   ci->map_param[mapnum]);
-  }
   return(0);
 }
 
@@ -182,7 +155,6 @@ int vorbis_synthesis_restart(vorbis_dsp_state *v){
   vorbis_info *vi=v->vi;
   codec_setup_info *ci;
 
-  if(!v->backend_state)return -1;
   if(!vi)return -1;
   ci=vi->codec_setup;
   if(!ci)return -1;
@@ -193,7 +165,7 @@ int vorbis_synthesis_restart(vorbis_dsp_state *v){
   v->pcm_returned=-1;
   v->granulepos=-1;
   v->sequence=-1;
-  ((private_state *)(v->backend_state))->sample_count=-1;
+  v->sample_count=-1;
 
   return(0);
 }
@@ -210,7 +182,6 @@ void vorbis_dsp_clear(vorbis_dsp_state *v){
   if(v){
     vorbis_info *vi=v->vi;
     codec_setup_info *ci=(codec_setup_info *)(vi?vi->codec_setup:NULL);
-    private_state *b=(private_state *)v->backend_state;
 
     if(v->pcm){
       for(i=0;i<vi->channels;i++)
@@ -219,19 +190,6 @@ void vorbis_dsp_clear(vorbis_dsp_state *v){
       if(v->pcmret)_ogg_free(v->pcmret);
     }
 
-    /* free mode lookups; these are actually vorbis_look_mapping structs */
-    if(ci){
-      for(i=0;i<ci->modes;i++){
-	int mapnum=ci->mode_param[i].mapping;
-	if(b && b->mode)_mapping_P[0]->free_look(b->mode[i]);
-      }
-    }
-
-    if(b){
-      if(b->mode)_ogg_free(b->mode);    
-      _ogg_free(b);
-    }
-    
     memset(v,0,sizeof(*v));
   }
 }
@@ -243,7 +201,6 @@ void vorbis_dsp_clear(vorbis_dsp_state *v){
 int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
   vorbis_info *vi=v->vi;
   codec_setup_info *ci=(codec_setup_info *)vi->codec_setup;
-  private_state *b=v->backend_state;
   int i,j;
 
   if(v->pcm_current>v->pcm_returned  && v->pcm_returned!=-1)return(OV_EINVAL);
@@ -255,7 +212,7 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
   if((v->sequence==-1)||
      (v->sequence+1 != vb->sequence)){
     v->granulepos=-1; /* out of sequence; lose count */
-    b->sample_count=-1;
+    v->sample_count=-1;
   }
 
   v->sequence=vb->sequence;
@@ -358,10 +315,10 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
      is.  For this reason, vorbisfile will always try to make sure
      it reads the last two marked pages in proper sequence */
   
-  if(b->sample_count==-1){
-    b->sample_count=0;
+  if(v->sample_count==-1){
+    v->sample_count=0;
   }else{
-    b->sample_count+=ci->blocksizes[v->lW]/4+ci->blocksizes[v->W]/4;
+    v->sample_count+=ci->blocksizes[v->lW]/4+ci->blocksizes[v->W]/4;
   }
     
   if(v->granulepos==-1){
@@ -370,7 +327,7 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
       v->granulepos=vb->granulepos;
       
       /* is this a short page? */
-      if(b->sample_count>v->granulepos){
+      if(v->sample_count>v->granulepos){
 	/* corner case; if this is both the first and last audio page,
 	   then spec says the end is cut, not beginning */
 	if(vb->eofflag){
@@ -380,10 +337,10 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
 	  /* granulepos could be -1 due to a seek, but that would result
 	     in a long coun`t, not short count */
 	  
-	  v->pcm_current-=(b->sample_count-v->granulepos);
+	  v->pcm_current-=(v->sample_count-v->granulepos);
 	}else{
 	  /* trim the beginning */
-	  v->pcm_returned+=(b->sample_count-v->granulepos);
+	  v->pcm_returned+=(v->sample_count-v->granulepos);
 	  if(v->pcm_returned>v->pcm_current)
 	    v->pcm_returned=v->pcm_current;
 	}
@@ -409,10 +366,7 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
       v->granulepos=vb->granulepos;
     }
   }
-  
-  /* Update, cleanup */
-  
-  if(vb->eofflag)v->eofflag=1;
+
   return(0);
 }
 

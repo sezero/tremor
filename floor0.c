@@ -75,24 +75,27 @@ static inline ogg_int32_t vorbis_coslook2_i(long a){
     (COS_LOOKUP_I_SHIFT-LSP_FRACBITS+14);
 }
 
-static const ogg_int32_t barklook[28]={
-  0,100,200,301,          405,516,635,766,
-  912,1077,1263,1476,     1720,2003,2333,2721,
-  3184,3742,4428,5285,    6376,7791,9662,12181,
-  15624,20397,27087,36554
+static const ogg_uint16_t barklook[54]={
+  0,51,102,154,            206,258,311,365,
+  420,477,535,594,         656,719,785,854,
+  926,1002,1082,1166,      1256,1352,1454,1564,
+  1683,1812,1953,2107,     2276,2463,2670,2900,
+  3155,3440,3756,4106,     4493,4919,5387,5901,
+  6466,7094,7798,8599,     9528,10623,11935,13524,
+  15453,17775,20517,23667, 27183,31004
 };
 
 /* used in init only; interpolate the long way */
 static inline ogg_int32_t toBARK(int n){
   int i;
-  for(i=0;i<27;i++) 
+  for(i=0;i<54;i++) 
     if(n>=barklook[i] && n<barklook[i+1])break;
   
-  if(i==27){
-    return 27<<15;
+  if(i==54){
+    return 54<<14;
   }else{
-    return (i<<15)+(((n-barklook[i])*  
-		     ((1<<31)/(barklook[i+1]-barklook[i])))>>16);
+    return (i<<14)+(((n-barklook[i])*  
+		     ((1UL<<31)/(barklook[i+1]-barklook[i])))>>17);
   }
 }
 
@@ -112,7 +115,6 @@ static const unsigned char MLOOP_2[64]={
 
 static const unsigned char MLOOP_3[8]={0,1,2,2,3,3,3,3};
 
-#include <stdio.h>
 void vorbis_lsp_to_curve(ogg_int32_t *curve,int n,int ln,
 			 ogg_int32_t *lsp,int m,
 			 ogg_int32_t amp,
@@ -139,9 +141,9 @@ void vorbis_lsp_to_curve(ogg_int32_t *curve,int n,int ln,
   int fdy=nyq-fbase*fdx;
   int map=0;
 
-  ogg_uint32_t nextbark=MULT31(imap>>1,toBARK(nyq));
-  int nextf=barklook[nextbark>>15]+(((nextbark&0x7fff)*
-	    (barklook[(nextbark>>15)+1]-barklook[nextbark>>15]))>>15);
+  ogg_uint32_t nextbark=MULT31(imap>>1,tBnyq1);
+  int nextf=barklook[nextbark>>14]+(((nextbark&0x3fff)*
+	    (barklook[(nextbark>>14)+1]-barklook[nextbark>>14]))>>14);
 
   /* lsp is in 8.24, range 0 to PI; coslook wants it in .16 0 to 1*/
   for(i=0;i<m;i++){
@@ -292,16 +294,18 @@ void vorbis_lsp_to_curve(ogg_int32_t *curve,int n,int ln,
       f+=fbase;
       
       if(f>=nextf)break;
+
       curve[i]= MULT31_SHIFT15(curve[i],amp);
     }
 
     while(1){
       map++;
+
       nextbark=MULT31((map+1)*(imap>>1),tBnyq1);
-      nextf=barklook[nextbark>>15]+
-	(((nextbark&0x7fff)*
-	  (barklook[(nextbark>>15)+1]-barklook[nextbark>>15]))>>15);
-      if(f<nextf)break;
+      nextf=barklook[nextbark>>14]+
+	(((nextbark&0x3fff)*
+	  (barklook[(nextbark>>14)+1]-barklook[nextbark>>14]))>>14);
+      if(f<=nextf)break;
     }
     if(map>=ln){
       map=ln-1; /* guard against the approximation */      
@@ -312,12 +316,12 @@ void vorbis_lsp_to_curve(ogg_int32_t *curve,int n,int ln,
 
 /*************** vorbis decode glue ************/
 
-static void floor0_free_info(vorbis_info_floor *i){
+void floor0_free_info(vorbis_info_floor *i){
   vorbis_info_floor0 *info=(vorbis_info_floor0 *)i;
   if(info)_ogg_free(info);
 }
 
-static vorbis_info_floor *floor0_unpack (vorbis_info *vi,oggpack_buffer *opb){
+vorbis_info_floor *floor0_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
   codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;
   int j;
 
@@ -346,7 +350,7 @@ static vorbis_info_floor *floor0_unpack (vorbis_info *vi,oggpack_buffer *opb){
   return(NULL);
 }
 
-static void *floor0_inverse1(vorbis_block *vb,vorbis_info_floor *i){
+void *floor0_inverse1(vorbis_block *vb,vorbis_info_floor *i){
   vorbis_info_floor0 *info=(vorbis_info_floor0 *)i;
   int j,k;
   
@@ -378,7 +382,7 @@ static void *floor0_inverse1(vorbis_block *vb,vorbis_info_floor *i){
   return(NULL);
 }
 
-static int floor0_inverse2(vorbis_block *vb,vorbis_info_floor *i,
+int floor0_inverse2(vorbis_block *vb,vorbis_info_floor *i,
 			   void *memo,ogg_int32_t *out){
   vorbis_info_floor0 *info=(vorbis_info_floor0 *)i;
   
@@ -395,11 +399,4 @@ static int floor0_inverse2(vorbis_block *vb,vorbis_info_floor *i,
   memset(out,0,sizeof(*out)*vb->pcmend/2);
   return(0);
 }
-
-/* export hooks */
-vorbis_func_floor floor0_exportbundle={
-  &floor0_unpack,&floor0_free_info,
-  &floor0_inverse1,&floor0_inverse2
-};
-
 

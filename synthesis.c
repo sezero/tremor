@@ -12,7 +12,7 @@
  ********************************************************************
 
  function: single-block PCM synthesis
- last mod: $Id: synthesis.c,v 1.4.2.2 2003/04/13 09:03:09 xiphmont Exp $
+ last mod: $Id: synthesis.c,v 1.4.2.3 2003/04/14 01:13:44 xiphmont Exp $
 
  ********************************************************************/
 
@@ -23,9 +23,18 @@
 #include "misc.h"
 #include "os.h"
 
+static int ilog(unsigned int v){
+  int ret=0;
+  if(v)--v;
+  while(v){
+    ret++;
+    v>>=1;
+  }
+  return(ret);
+}
+
 int vorbis_synthesis(vorbis_block *vb,ogg_packet *op,int decodep){
   vorbis_dsp_state     *vd=vb->vd;
-  private_state        *b=(private_state *)vd->backend_state;
   vorbis_info          *vi=vd->vi;
   codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;
   oggpack_buffer       *opb=&vb->opb;
@@ -42,7 +51,7 @@ int vorbis_synthesis(vorbis_block *vb,ogg_packet *op,int decodep){
   }
 
   /* read our mode and pre/post windowsize */
-  mode=oggpack_read(opb,b->modebits);
+  mode=oggpack_read(opb,ilog(ci->modes));
   if(mode==-1)return(OV_EBADPACKET);
   
   vb->mode=mode;
@@ -69,7 +78,7 @@ int vorbis_synthesis(vorbis_block *vb,ogg_packet *op,int decodep){
       vb->pcm[i]=(ogg_int32_t *)_vorbis_block_alloc(vb,vb->pcmend*sizeof(*vb->pcm[i]));
     
     /* unpack_header enforces range checking */
-    return(_mapping_P[0]->inverse(vb,b->mode[mode]));
+    return(mapping_inverse(vb,ci->map_param+ci->mode_param[mode].mapping));
   }else{
     /* no pcm */
     vb->pcmend=0;

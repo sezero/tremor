@@ -24,68 +24,69 @@
 #include "mdct.h"
 #include "codec_internal.h"
 #include "codebook.h"
-#include "window.h"
 #include "misc.h"
+#include "window_lookup.h"
 
-/* simplistic, wasteful way of doing this (unique lookup for each
-   mode/submapping); there should be a central repository for
-   identical lookups.  That will require minor work, so I'm putting it
-   off as low priority.
+static const void *_vorbis_window(int left){
+  switch(left){
+  case 32:
+    return vwin64;
+  case 64:
+    return vwin128;
+  case 128:
+    return vwin256;
+  case 256:
+    return vwin512;
+  case 512:
+    return vwin1024;
+  case 1024:
+    return vwin2048;
+  case 2048:
+    return vwin4096;
+  case 4096:
+    return vwin8192;
+  default:
+    return(0);
+  }
+}
 
-   Why a lookup for each backend in a given mode?  Because the
-   blocksize is set by the mode, and low backend lookups may require
-   parameters from other areas of the mode/mapping */
+static void _vorbis_apply_window(ogg_int32_t *d,
+				 long *blocksizes,
+				 int lW,int W,int nW){
+  
+  LOOKUP_T *window[2];
+  long n=blocksizes[W];
+  long ln=blocksizes[lW];
+  long rn=blocksizes[nW];
 
-typedef struct {
-  vorbis_info_mode *mode;
-  vorbis_info_mapping0 *map;
+  long leftbegin=n/4-ln/4;
+  long leftend=leftbegin+ln/2;
 
-  vorbis_func_floor **floor_func;
+  long rightbegin=n/2+n/4-rn/4;
+  long rightend=rightbegin+rn/2;
+  
+  int i,p;
 
+  window[0]=_vorbis_window(blocksizes[0]>>1);
+  window[1]=_vorbis_window(blocksizes[1]>>1);
 
-  int ch;
-  long lastframe; /* if a different mode is called, we need to 
-		     invalidate decay */
-} vorbis_look_mapping0;
+  for(i=0;i<leftbegin;i++)
+    d[i]=0;
 
-static void mapping0_free_info(vorbis_info_mapping *i){
-  vorbis_info_mapping0 *info=(vorbis_info_mapping0 *)i;
+  for(p=0;i<leftend;i++,p++)
+    d[i]=MULT31(d[i],window[lW][p]);
+
+  for(i=rightbegin,p=rn/2-1;i<rightend;i++,p--)
+    d[i]=MULT31(d[i],window[nW][p]);
+
+  for(;i<n;i++)
+    d[i]=0;
+}
+
+void mapping_clear_info(vorbis_info_mapping *info){
   if(info){
     memset(info,0,sizeof(*info));
-    _ogg_free(info);
   }
-}
-
-static void mapping0_free_look(vorbis_look_mapping *look){
-  int i;
-  vorbis_look_mapping0 *l=(vorbis_look_mapping0 *)look;
-  if(l){
-
-    _ogg_free(l->floor_func);
-    memset(l,0,sizeof(*l));
-    _ogg_free(l);
-  }
-}
-
-static vorbis_look_mapping *mapping0_look(vorbis_dsp_state *vd,vorbis_info_mode *vm,
-			  vorbis_info_mapping *m){
-  int i;
-  vorbis_info          *vi=vd->vi;
-  codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;
-  vorbis_look_mapping0 *look=(vorbis_look_mapping0 *)_ogg_calloc(1,sizeof(*look));
-  vorbis_info_mapping0 *info=look->map=(vorbis_info_mapping0 *)m;
-  look->mode=vm;
-  
-  look->floor_func=(vorbis_func_floor **)_ogg_calloc(info->submaps,sizeof(*look->floor_func));
-  
-  for(i=0;i<info->submaps;i++){
-    int floornum=info->floorsubmap[i];
-    look->floor_func[i]=_floor_P[ci->floor_type[floornum]];
-  }
-
-  look->ch=vi->channels;
-
-  return(look);
 }
 
 static int ilog(unsigned int v){
@@ -99,9 +100,9 @@ static int ilog(unsigned int v){
 }
 
 /* also responsible for range checking */
-static vorbis_info_mapping *mapping0_unpack(vorbis_info *vi,oggpack_buffer *opb){
+int mapping_info_unpack(vorbis_info_mapping *info,vorbis_info *vi,
+			oggpack_buffer *opb){
   int i;
-  vorbis_info_mapping0 *info=(vorbis_info_mapping0 *)_ogg_calloc(1,sizeof(*info));
   codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;
   memset(info,0,sizeof(*info));
 
@@ -142,21 +143,17 @@ static vorbis_info_mapping *mapping0_unpack(vorbis_info *vi,oggpack_buffer *opb)
     if(info->residuesubmap[i]>=ci->residues)goto err_out;
   }
 
-  return info;
+  return 0;
 
  err_out:
-  mapping0_free_info(info);
-  return(NULL);
+  mapping_clear_info(info);
+  return -1;
 }
 
-static int seq=0;
-static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
+int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
   vorbis_dsp_state     *vd=vb->vd;
   vorbis_info          *vi=vd->vi;
   codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;
-  private_state        *b=(private_state *)vd->backend_state;
-  vorbis_look_mapping0 *look=(vorbis_look_mapping0 *)l;
-  vorbis_info_mapping0 *info=look->map;
 
   int                   i,j;
   long                  n=vb->pcmend=ci->blocksizes[vb->W];
@@ -170,8 +167,16 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
   /* recover the spectral envelope; store it in the PCM vector for now */
   for(i=0;i<vi->channels;i++){
     int submap=info->chmuxlist[i];
-    floormemo[i]=look->floor_func[submap]->
-      inverse1(vb,ci->floor_param[info->floorsubmap[submap]]);
+    int floorno=info->floorsubmap[submap];
+
+    if(ci->floor_type[floorno]){
+      /* floor 1 */
+      floormemo[i]=floor1_inverse1(vb,ci->floor_param[floorno]);
+    }else{
+      /* floor 0 */
+      floormemo[i]=floor0_inverse1(vb,ci->floor_param[floorno]);
+    }
+
     if(floormemo[i])
       nonzero[i]=1;
     else
@@ -243,9 +248,15 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
   for(i=0;i<vi->channels;i++){
     ogg_int32_t *pcm=vb->pcm[i];
     int submap=info->chmuxlist[i];
-    look->floor_func[submap]->
-      inverse2(vb,ci->floor_param[info->floorsubmap[submap]],
-	       floormemo[i],pcm);
+    int floorno=info->floorsubmap[submap];
+
+    if(ci->floor_type[floorno]){
+      /* floor 1 */
+      floor1_inverse2(vb,ci->floor_param[floorno],floormemo[i],pcm);
+    }else{
+      /* floor 0 */
+      floor0_inverse2(vb,ci->floor_param[floorno],floormemo[i],pcm);
+    }
   }
 
   //for(j=0;j<vi->channels;j++)
@@ -265,7 +276,7 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
   for(i=0;i<vi->channels;i++){
     ogg_int32_t *pcm=vb->pcm[i];
     if(nonzero[i])
-      _vorbis_apply_window(pcm,b->window,ci->blocksizes,vb->lW,vb->W,vb->nW);
+      _vorbis_apply_window(pcm,ci->blocksizes,vb->lW,vb->W,vb->nW);
     else
       for(j=0;j<n;j++)
 	pcm[j]=0;
@@ -275,16 +286,6 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
   //for(j=0;j<vi->channels;j++)
   //_analysis_output("window",seq+j,vb->pcm[j],-24,n,0,0);
 
-  seq+=vi->channels;
   /* all done! */
   return(0);
 }
-
-/* export hooks */
-vorbis_func_mapping mapping0_exportbundle={
-  &mapping0_unpack,
-  &mapping0_look,
-  &mapping0_free_info,
-  &mapping0_free_look,
-  &mapping0_inverse
-};

@@ -57,7 +57,6 @@ typedef struct vorbis_info{
    analysis/synthesis state.  The DSP state belongs to a specific
    logical bitstream ****************************************************/
 typedef struct vorbis_dsp_state{
-  int analysisp;
   vorbis_info *vi;
 
   ogg_int32_t **pcm;
@@ -66,9 +65,6 @@ typedef struct vorbis_dsp_state{
   int      pcm_current;
   int      pcm_returned;
 
-  int  preextrapolate;
-  int  eofflag;
-
   long lW;
   long W;
   long nW;
@@ -76,8 +72,8 @@ typedef struct vorbis_dsp_state{
 
   ogg_int64_t granulepos;
   ogg_int64_t sequence;
+  ogg_int64_t sample_count;
 
-  void       *backend_state;
 } vorbis_dsp_state;
 
 typedef struct vorbis_block{

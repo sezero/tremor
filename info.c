@@ -25,7 +25,6 @@
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
 #include "codebook.h"
-#include "window.h"
 #include "misc.h"
 #include "os.h"
 
@@ -121,12 +120,18 @@ void vorbis_info_clear(vorbis_info *vi){
 
     if(ci->mode_param)_ogg_free(ci->mode_param);
 
-    for(i=0;i<ci->maps;i++) /* unpack does the range checking */
-      _mapping_P[0]->free_info(ci->map_param[i]);
+    if(ci->map_param){
+      for(i=0;i<ci->maps;i++) /* unpack does the range checking */
+	mapping_clear_info(ci->map_param+i);
+      _ogg_free(ci->map_param);
+    }
 
     if(ci->floor_param){
       for(i=0;i<ci->floors;i++) /* unpack does the range checking */
-	_floor_P[ci->floor_type[i]]->free_info(ci->floor_param[i]);
+	if(ci->floor_type[i])
+	  floor1_free_info(ci->floor_param[i]);
+	else
+	  floor0_free_info(ci->floor_param[i]);
       _ogg_free(ci->floor_param);
       _ogg_free(ci->floor_type);
     }
@@ -234,7 +239,10 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
   for(i=0;i<ci->floors;i++){
     ci->floor_type[i]=oggpack_read(opb,16);
     if(ci->floor_type[i]<0 || ci->floor_type[i]>=VI_FLOORB)goto err_out;
-    ci->floor_param[i]=_floor_P[ci->floor_type[i]]->unpack(vi,opb);
+    if(ci->floor_type[i])
+      ci->floor_param[i]=floor1_info_unpack(vi,opb);
+    else
+      ci->floor_param[i]=floor0_info_unpack(vi,opb);
     if(!ci->floor_param[i])goto err_out;
   }
 
@@ -246,10 +254,10 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
 
   /* map backend settings */
   ci->maps=oggpack_read(opb,6)+1;
+  ci->map_param=_ogg_malloc(sizeof(*ci->map_param)*ci->maps);
   for(i=0;i<ci->maps;i++){
     if(oggpack_read(opb,16)!=0)goto err_out;
-    ci->map_param[i]=_mapping_P[0]->unpack(vi,opb);
-    if(!ci->map_param[i])goto err_out;
+    if(mapping_info_unpack(ci->map_param+i,vi,opb))goto err_out;
   }
   
   /* mode settings */
