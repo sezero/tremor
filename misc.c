@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
-#include "vorbis/codec.h"
 #define MISC_C
 #include "misc.h"
 #include <sys/time.h>
