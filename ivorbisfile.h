@@ -78,8 +78,8 @@ typedef struct OggVorbis_File {
 
   ogg_stream_state *os; /* take physical pages, weld into a logical
                           stream of packets */
-  vorbis_dsp_state vd; /* central working state for the packet->PCM decoder */
-  vorbis_block     vb; /* local working space for packet->PCM decode */
+  vorbis_dsp_state *vd; /* central working state for the packet->PCM decoder */
+  vorbis_block     *vb; /* local working space for packet->PCM decode */
 
   ov_callbacks callbacks;
 

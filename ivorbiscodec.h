@@ -156,15 +156,16 @@ extern char    *vorbis_comment_query(vorbis_comment *vc, char *tag, int count);
 extern int      vorbis_comment_query_count(vorbis_comment *vc, char *tag);
 extern void     vorbis_comment_clear(vorbis_comment *vc);
 
-extern int      vorbis_block_init(vorbis_dsp_state *v, vorbis_block *vb);
-extern int      vorbis_block_clear(vorbis_block *vb);
-extern void     vorbis_dsp_clear(vorbis_dsp_state *v);
+extern vorbis_block *vorbis_block_create(vorbis_dsp_state *v);
+extern int      vorbis_block_destroy(vorbis_block *vb);
+
+extern vorbis_dsp_state *vorbis_dsp_create(vorbis_info *vi);
+extern void     vorbis_dsp_destroy(vorbis_dsp_state *v);
 
 /* Vorbis PRIMITIVES: synthesis layer *******************************/
 extern int      vorbis_synthesis_headerin(vorbis_info *vi,vorbis_comment *vc,
 					  ogg_packet *op);
 
-extern int      vorbis_synthesis_init(vorbis_dsp_state *v,vorbis_info *vi);
 extern int      vorbis_synthesis_restart(vorbis_dsp_state *v);
 extern int      vorbis_synthesis(vorbis_block *vb,ogg_packet *op,int decodep);
 extern int      vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb);

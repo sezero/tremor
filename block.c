@@ -67,13 +67,13 @@
 #define WORD_ALIGN 8
 #endif
 
-int vorbis_block_init(vorbis_dsp_state *v, vorbis_block *vb){
-  memset(vb,0,sizeof(*vb));
+vorbis_block *vorbis_block_create(vorbis_dsp_state *v){
+  vorbis_block *vb=_ogg_calloc(1,sizeof(*vb));
   vb->vd=v;
   vb->localalloc=0;
   vb->localstore=NULL;
   
-  return(0);
+  return vb;
 }
 
 void *_vorbis_block_alloc(vorbis_block *vb,long bytes){
@@ -122,12 +122,11 @@ void _vorbis_block_ripcord(vorbis_block *vb){
   vb->reap=NULL;
 }
 
-int vorbis_block_clear(vorbis_block *vb){
+int vorbis_block_destroy(vorbis_block *vb){
   _vorbis_block_ripcord(vb);
   if(vb->localstore)_ogg_free(vb->localstore);
-
-  memset(vb,0,sizeof(*vb));
-  return(0);
+  _ogg_free(vb);
+  return 0;
 }
 
 static int _vds_init(vorbis_dsp_state *v,vorbis_info *vi){
@@ -152,32 +151,34 @@ static int _vds_init(vorbis_dsp_state *v,vorbis_info *vi){
 }
 
 int vorbis_synthesis_restart(vorbis_dsp_state *v){
-  vorbis_info *vi=v->vi;
-  codec_setup_info *ci;
-
-  if(!vi)return -1;
-  ci=vi->codec_setup;
-  if(!ci)return -1;
-
-  v->centerW=ci->blocksizes[1]/2;
-  v->pcm_current=v->centerW;
-  
-  v->pcm_returned=-1;
-  v->granulepos=-1;
-  v->sequence=-1;
-  v->sample_count=-1;
-
-  return(0);
+  if(!v)return -1;
+  {
+    vorbis_info *vi=v->vi;
+    codec_setup_info *ci;
+    
+    if(!vi)return -1;
+    ci=vi->codec_setup;
+    if(!ci)return -1;
+    
+    v->centerW=ci->blocksizes[1]/2;
+    v->pcm_current=v->centerW;
+    
+    v->pcm_returned=-1;
+    v->granulepos=-1;
+    v->sequence=-1;
+    v->sample_count=-1;
+  }
+  return 0;
 }
 
-int vorbis_synthesis_init(vorbis_dsp_state *v,vorbis_info *vi){
+vorbis_dsp_state *vorbis_dsp_create(vorbis_info *vi){
+  vorbis_dsp_state *v=_ogg_calloc(1,sizeof(*v));
   _vds_init(v,vi);
   vorbis_synthesis_restart(v);
-
-  return(0);
+  return v;
 }
 
-void vorbis_dsp_clear(vorbis_dsp_state *v){
+void vorbis_dsp_destroy(vorbis_dsp_state *v){
   int i;
   if(v){
     vorbis_info *vi=v->vi;
@@ -190,7 +191,7 @@ void vorbis_dsp_clear(vorbis_dsp_state *v){
       if(v->pcmret)_ogg_free(v->pcmret);
     }
 
-    memset(v,0,sizeof(*v));
+    _ogg_free(v);
   }
 }
 

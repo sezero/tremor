@@ -12,7 +12,7 @@
  ********************************************************************
 
  function: stdio-based convenience library for opening/seeking/decoding
- last mod: $Id: vorbisfile.c,v 1.6.2.1 2003/04/09 09:43:49 xiphmont Exp $
+ last mod: $Id: vorbisfile.c,v 1.6.2.2 2003/04/14 06:40:51 xiphmont Exp $
 
  ********************************************************************/
 
@@ -409,11 +409,11 @@ static void _prefetch_all_headers(OggVorbis_File *vf, ogg_int64_t dataoffset){
 static void _make_decode_ready(OggVorbis_File *vf){
   if(vf->ready_state!=STREAMSET)return;
   if(vf->seekable){
-    vorbis_synthesis_init(&vf->vd,vf->vi+vf->current_link);
+    vf->vd=vorbis_dsp_create(vf->vi+vf->current_link);
   }else{
-    vorbis_synthesis_init(&vf->vd,vf->vi);
+    vf->vd=vorbis_dsp_create(vf->vi);
   }    
-  vorbis_block_init(&vf->vd,&vf->vb);
+  vf->vb=vorbis_block_create(vf->vd);
   vf->ready_state=INITSET;
   vf->bittrack=0;
   vf->samptrack=0;
@@ -461,8 +461,10 @@ static int _open_seekable2(OggVorbis_File *vf){
 
 /* clear out the current logical bitstream decoder */ 
 static void _decode_clear(OggVorbis_File *vf){
-  vorbis_dsp_clear(&vf->vd);
-  vorbis_block_clear(&vf->vb);
+  vorbis_dsp_destroy(vf->vd);
+  vorbis_block_destroy(vf->vb);
+  vf->vd=0;
+  vf->vb=0;
   vf->ready_state=OPENED;
 }
 
@@ -502,7 +504,7 @@ static int _fetch_and_process_packet(OggVorbis_File *vf,
 	if(result>0){
 	  /* got a packet.  process it */
 	  granulepos=op.granulepos;
-	  if(!vorbis_synthesis(&vf->vb,&op,1)){ /* lazy check for lazy
+	  if(!vorbis_synthesis(vf->vb,&op,1)){ /* lazy check for lazy
 						      header handling.  The
 						      header packets aren't
 						      audio, so if/when we
@@ -512,7 +514,7 @@ static int _fetch_and_process_packet(OggVorbis_File *vf,
 
 	    /* suck in the synthesis data and track bitrate */
 	    {
-	      int oldsamples=vorbis_synthesis_pcmout(&vf->vd,NULL);
+	      int oldsamples=vorbis_synthesis_pcmout(vf->vd,NULL);
 	      /* for proper use of libvorbis within libvorbisfile,
                  oldsamples will always be zero. */
 	      if(oldsamples){
@@ -520,8 +522,8 @@ static int _fetch_and_process_packet(OggVorbis_File *vf,
 		goto cleanup;
 	      }
 
-	      vorbis_synthesis_blockin(&vf->vd,&vf->vb);
-	      vf->samptrack+=vorbis_synthesis_pcmout(&vf->vd,NULL)-oldsamples;
+	      vorbis_synthesis_blockin(vf->vd,vf->vb);
+	      vf->samptrack+=vorbis_synthesis_pcmout(vf->vd,NULL)-oldsamples;
 	      vf->bittrack+=op.bytes*8;
 	    }
 	  
@@ -550,7 +552,7 @@ static int _fetch_and_process_packet(OggVorbis_File *vf,
 					       here unless the stream
 					       is very broken */
 
-	      samples=vorbis_synthesis_pcmout(&vf->vd,NULL);
+	      samples=vorbis_synthesis_pcmout(vf->vd,NULL);
 	    
 	      granulepos-=samples;
 	      for(i=0;i<link;i++)
@@ -726,8 +728,10 @@ static int _ov_open2(OggVorbis_File *vf){
 /* clear out the OggVorbis_File struct */
 int ov_clear(OggVorbis_File *vf){
   if(vf){
-    vorbis_block_clear(&vf->vb);
-    vorbis_dsp_clear(&vf->vd);
+    vorbis_block_destroy(vf->vb);
+    vorbis_dsp_destroy(vf->vd);
+    vf->vd=0;
+    vf->vb=0;
     ogg_stream_destroy(vf->os);
     
     if(vf->vi && vf->links){
@@ -970,7 +974,7 @@ int ov_raw_seek(OggVorbis_File *vf,ogg_int64_t pos){
   vf->pcm_offset=-1;
   ogg_stream_reset_serialno(vf->os,
 			    vf->current_serialno); /* must set serialno */
-  vorbis_synthesis_restart(&vf->vd);
+  vorbis_synthesis_restart(vf->vd);
     
   _seek_helper(vf,pos);
 
@@ -1214,7 +1218,7 @@ int ov_pcm_seek_page(OggVorbis_File *vf,ogg_int64_t pos){
 	vf->ready_state=STREAMSET;
 	
       }else{
-	vorbis_synthesis_restart(&vf->vd);
+	vorbis_synthesis_restart(vf->vd);
       }
 
       ogg_stream_reset_serialno(vf->os,vf->current_serialno);
@@ -1309,10 +1313,10 @@ int ov_pcm_seek(OggVorbis_File *vf,ogg_int64_t pos){
       
       /* remove the packet from packet queue and track its granulepos */
       ogg_stream_packetout(vf->os,NULL);
-      vorbis_synthesis(&vf->vb,&op,0);  /* set up a vb with
+      vorbis_synthesis(vf->vb,&op,0);  /* set up a vb with
 					   only tracking, no
 					   pcm_decode */
-      vorbis_synthesis_blockin(&vf->vd,&vf->vb); 
+      vorbis_synthesis_blockin(vf->vd,vf->vb); 
       
       /* end of logical stream case is hard, especially with exact
 	 length positioning. */
@@ -1364,10 +1368,10 @@ int ov_pcm_seek(OggVorbis_File *vf,ogg_int64_t pos){
      logical bitstream boundary with abandon is OK. */
   while(vf->pcm_offset<pos){
     ogg_int64_t target=pos-vf->pcm_offset;
-    long samples=vorbis_synthesis_pcmout(&vf->vd,NULL);
+    long samples=vorbis_synthesis_pcmout(vf->vd,NULL);
 
     if(samples>target)samples=target;
-    vorbis_synthesis_read(&vf->vd,samples);
+    vorbis_synthesis_read(vf->vd,samples);
     vf->pcm_offset+=samples;
     
     if(samples<target)
@@ -1549,7 +1553,7 @@ long ov_read(OggVorbis_File *vf,char *buffer,int bytes_req,int *bitstream){
 
   while(1){
     if(vf->ready_state==INITSET){
-      samples=vorbis_synthesis_pcmout(&vf->vd,&pcm);
+      samples=vorbis_synthesis_pcmout(vf->vd,&pcm);
       if(samples)break;
     }
 
@@ -1587,7 +1591,7 @@ long ov_read(OggVorbis_File *vf,char *buffer,int bytes_req,int *bitstream){
       }
     }
     
-    vorbis_synthesis_read(&vf->vd,samples);
+    vorbis_synthesis_read(vf->vd,samples);
     vf->pcm_offset+=samples;
     if(bitstream)*bitstream=vf->current_link;
     return(samples*2*channels);

@@ -222,8 +222,7 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
 
   /* codebooks */
   ci->books=oggpack_read(opb,8)+1;
-  ci->book_param=(codebook *)
-    _ogg_calloc(ci->books,sizeof(*ci->book_param));
+  ci->book_param=(codebook *)_ogg_calloc(ci->books,sizeof(*ci->book_param));
   for(i=0;i<ci->books;i++)
     if(vorbis_book_unpack(opb,ci->book_param+i))goto err_out;
 
