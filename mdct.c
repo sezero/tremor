@@ -13,7 +13,7 @@
 
  function: normalized modified discrete cosine transform
            power of two length transform only [64 <= n ]
- last mod: $Id: mdct.c,v 1.3 2002/09/10 08:20:40 xiphmont Exp $
+ last mod: $Id: mdct.c,v 1.4 2002/09/13 16:37:56 xiphmont Exp $
 
  Original algorithm adapted long ago from _The use of multirate filter
  banks for coding of high quality digital audio_, by T. Sporer,
@@ -41,63 +41,6 @@
 #include "mdct.h"
 #include "mdct_lookup.h"
 #include "misc.h"
-
-typedef struct {
-  int n;
-  int log2n;
-  
-  DATA_TYPE *trig;
-  DATA_TYPE  scale;
-} mdct_lookup;
-
-static void mdct_init(mdct_lookup *lookup,int n){
-  lookup->n=n;
-  switch(n){
-  case 64:
-    lookup->log2n=6;
-    lookup->trig=triglook_64;
-    lookup->scale=0x04000000;
-    break;
-  case 128:
-    lookup->log2n=7;
-    lookup->trig=triglook_128;
-    lookup->scale=0x02000000;
-    break;
-  case 256:
-    lookup->log2n=8;
-    lookup->trig=triglook_256;
-    lookup->scale=0x01000000;
-    break;
-  case 512:
-    lookup->log2n=9;
-    lookup->trig=triglook_512;
-    lookup->scale=0x00800000;
-    break;
-  case 1024:
-    lookup->log2n=10;
-    lookup->trig=triglook_1024;
-    lookup->scale=0x00400000;
-    break;
-  case 2048:
-    lookup->log2n=11;
-    lookup->trig=triglook_2048;
-    lookup->scale=0x00200000;
-    break;
-  case 4096:
-    lookup->log2n=12;
-    lookup->trig=triglook_4096;
-    lookup->scale=0x00100000;
-    break;
-  case 8192:
-    lookup->log2n=13;
-    lookup->trig=triglook_8192;
-    lookup->scale=0x00080000;
-    break;
-  default:
-    /* die horribly */
-    memset(lookup,0,sizeof(*lookup));
-  }
-}
 
 /* 8 point butterfly (in place, 4 register) */
 STIN void mdct_butterfly_8(DATA_TYPE *x){
@@ -223,105 +166,108 @@ STIN void mdct_butterfly_32(DATA_TYPE *x){
 }
 
 /* N/stage point generic N stage butterfly (in place, 2 register) */
-STIN void mdct_butterfly_generic(DATA_TYPE *x,
-				 int points,
-				 int step){
-  DATA_TYPE *T=quarter_sin+1024;
-  DATA_TYPE *V=quarter_sin;
+STIN void mdct_butterfly_generic(DATA_TYPE *x,int points,int step){
+
+  DATA_TYPE *T=sin_lookup+2048;
+  DATA_TYPE *V=sin_lookup;
   DATA_TYPE *x1        = x          + points      - 8;
   DATA_TYPE *x2        = x          + (points>>1) - 8;
   REG_TYPE   r0;
   REG_TYPE   r1;
 
   do{
-               r0      = x1[6]      -  x2[6];
+
+	       r0      = x1[6]      -  x2[6];
 	       r1      = x1[7]      -  x2[7];
 	       x1[6]  += x2[6];
 	       x1[7]  += x2[7];
-	       x2[6]   = MULT30(r1 , *V ) + MULT30( r0 , -*T);
-	       x2[7]   = MULT30(r1 , -*T ) - MULT30( r0 , *V);
-	T-=step;
-	V+=step;
+	       x2[6]   = MULT31(r0 , *T) - MULT31(r1 , *V);
+	       x2[7]   = MULT31(r1 , *T) + MULT31(r0 , *V);
+	       T      -= step;
+	       V      += step;
+
 	       r0      = x1[4]      -  x2[4];
 	       r1      = x1[5]      -  x2[5];
 	       x1[4]  += x2[4];
 	       x1[5]  += x2[5];
-	       x2[4]   = MULT30(r1 , *V ) + MULT30( r0 , -*T);
-	       x2[5]   = MULT30(r1 , -*T ) - MULT30( r0 , *V);
-	T-=step;
-	V+=step;	
+	       x2[4]   = MULT31(r0 , *T) - MULT31(r1 , *V);
+	       x2[5]   = MULT31(r1 , *T) + MULT31(r0 , *V);
+	       T      -= step;
+	       V      += step;	
+
 	       r0      = x1[2]      -  x2[2];
 	       r1      = x1[3]      -  x2[3];
 	       x1[2]  += x2[2];
 	       x1[3]  += x2[3];
-	       x2[2]   = MULT30(r1 , *V ) + MULT30( r0 , -*T);
-	       x2[3]   = MULT30(r1 , -*T ) - MULT30( r0 , *V);
-	T-=step;
-	V+=step;	
+	       x2[2]   = MULT31(r0 , *T) - MULT31(r1 , *V);
+	       x2[3]   = MULT31(r1 , *T) + MULT31(r0 , *V);
+	       T      -= step;
+	       V      += step;	
+
 	       r0      = x1[0]      -  x2[0];
 	       r1      = x1[1]      -  x2[1];
 	       x1[0]  += x2[0];
 	       x1[1]  += x2[1];
-	       x2[0]   = MULT30(r1 , *V ) + MULT30( r0 , -*T);
-	       x2[1]   = MULT30(r1 , -*T ) - MULT30( r0 , *V);
-	       
+	       x2[0]   = MULT31(r0 , *T) - MULT31(r1 , *V);
+	       x2[1]   = MULT31(r1 , *T) + MULT31(r0 , *V);
+	       T      -= step;
+	       V      += step;
+
         x1-=8;
         x2-=8;
-        T-=step;
-	V+=step;
-  }while(T>quarter_sin);
+  }while(T>sin_lookup);
 
   do{
     
-               r0      = x1[6]      -  x2[6];
-	       r1      = x1[7]      -  x2[7];
+               r0      = x2[6]      -  x1[6];
+	       r1      = x2[7]      -  x1[7];
 	       x1[6]  += x2[6];
 	       x1[7]  += x2[7];
-	       x2[6]   = MULT30(r1 , *V ) + MULT30( r0 , *T);
-	       x2[7]   = MULT30(r1 , *T ) - MULT30( r0 , *V);
-	T+=step;
-	V-=step;
-	       r0      = x1[4]      -  x2[4];
-	       r1      = x1[5]      -  x2[5];
+	       x2[6]   = MULT31(r0 , *T) + MULT31(r1 , *V);
+	       x2[7]   = MULT31(r1 , *T) - MULT31(r0 , *V);
+	       T      += step;
+	       V      -= step;
+
+	       r0      = x2[4]      -  x1[4];
+	       r1      = x2[5]      -  x1[5];
 	       x1[4]  += x2[4];
 	       x1[5]  += x2[5];
-	       x2[4]   = MULT30(r1 , *V ) + MULT30( r0 , *T);
-	       x2[5]   = MULT30(r1 , *T ) - MULT30( r0 , *V);
-	T+=step;
-	V-=step;	
-	       r0      = x1[2]      -  x2[2];
-	       r1      = x1[3]      -  x2[3];
+	       x2[4]   = MULT31(r0 , *T) + MULT31(r1 , *V);
+	       x2[5]   = MULT31(r1 , *T) - MULT31(r0 , *V);
+	       T      += step;
+	       V      -= step;	
+
+	       r0      = x2[2]      -  x1[2];
+	       r1      = x2[3]      -  x1[3];
 	       x1[2]  += x2[2];
 	       x1[3]  += x2[3];
-	       x2[2]   = MULT30(r1 , *V ) + MULT30( r0 , *T);
-	       x2[3]   = MULT30(r1 , *T ) - MULT30( r0 , *V);
-	T+=step;
-	V-=step;	
-	       r0      = x1[0]      -  x2[0];
-	       r1      = x1[1]      -  x2[1];
+	       x2[2]   = MULT31(r0 , *T) + MULT31(r1 , *V);
+	       x2[3]   = MULT31(r1 , *T) - MULT31(r0 , *V);
+	       T      += step;
+	       V      -= step;	
+
+	       r0      = x2[0]      -  x1[0];
+	       r1      = x2[1]      -  x1[1];
 	       x1[0]  += x2[0];
 	       x1[1]  += x2[1];
-	       x2[0]   = MULT30(r1 , *V ) + MULT30( r0 , *T);
-	       x2[1]   = MULT30(r1 , *T ) - MULT30( r0 , *V);
-	       
+	       x2[0]   = MULT31(r0 , *T) + MULT31(r1 , *V);
+	       x2[1]   = MULT31(r1 , *T) - MULT31(r0 , *V);
+	       T      += step;
+	       V      -= step;
+
         x1-=8;
         x2-=8;
-        T+=step;
-	V-=step;
-
   }while(x2>=x);
 }
 
-STIN void mdct_butterflies(mdct_lookup *init,
-			     DATA_TYPE *x,
-			     int points,
-			     int step){
-  int stages=init->log2n-5;
+STIN void mdct_butterflies(DATA_TYPE *x,int points,int shift){
+
+  int stages=8-shift;
   int i,j;
   
   for(i=0;--stages>0;i++){
     for(j=0;j<(1<<i);j++)
-      mdct_butterfly_generic(x+(points>>i)*j,points>>i,2<<(i+step));
+      mdct_butterfly_generic(x+(points>>i)*j,points>>i,4<<(i+shift));
   }
 
   for(j=0;j<points;j+=32)
@@ -329,21 +275,20 @@ STIN void mdct_butterflies(mdct_lookup *init,
 
 }
 
+static unsigned char bitrev[16]={0,8,4,12,2,10,6,14,1,9,5,13,3,11,7,15};
+
 STIN int bitrev12(int x){
-  int temp = (x<<8) | (x>>8) | (x & 0x0f0);
-  temp = ((temp & 0xccc) >> 2) | ((temp & 0x333) << 2);
-  return ((temp & 0xaaa) >> 1) | ((temp & 0x555) << 1);
+  return bitrev[x>>8]|(bitrev[(x&0x0f0)>>4]<<4)|(((int)bitrev[x&0x00f])<<8);
 }
 
-STIN void mdct_bitreverse(mdct_lookup *init, 
-			  DATA_TYPE *x,
-			  int shift){
+STIN void mdct_bitreverse(DATA_TYPE *x,int n,int step,int shift){
 
-  int          n     = init->n;
   int          bit   = 0;
   DATA_TYPE   *w0    = x;
   DATA_TYPE   *w1    = x = w0+(n>>1);
-  DATA_TYPE   *T     = init->trig+(n>>1);
+  DATA_TYPE   *T     = sin_lookup-(step>>1);
+  DATA_TYPE   *V     = sin_lookup+2048+(step>>1);
+  REG_TYPE     r2;
 
   do{
     REG_TYPE  r3     = bitrev12(bit++);
@@ -352,18 +297,20 @@ STIN void mdct_bitreverse(mdct_lookup *init,
 
     REG_TYPE  r0     = x0[1]  - x1[1];
     REG_TYPE  r1     = x0[0]  + x1[0];
-    REG_TYPE  r2     = MULT30(r1     , T[0] )  + MULT30(r0 , T[1]);
-              r3     = MULT30(r1     , T[1] )  - MULT30(r0 , T[0]);
+	      T     += step;
+	      V     -= step;
+	      r2     = MULT32(r0 , *T) - MULT32(r1 , *V);
+              r3     = MULT32(r1 , *T) + MULT32(r0 , *V);
 
 	      w1    -= 4;
 
-              r0     = (x0[1] + x1[1])/2;
-              r1     = (x0[0] - x1[0])/2;
+              r0     = (x0[1] + x1[1])>>1;
+              r1     = (x0[0] - x1[0])>>1;
       
-	      w0[0]  = r0     + r2;
-	      w1[2]  = r0     - r2;
-	      w0[1]  = r1     + r3;
-	      w1[3]  = r3     - r1;
+	      w0[0]  = r0     - r2;
+	      w1[2]  = r0     + r2;
+	      w0[1]  = r1     - r3;
+	      w1[3]  =-r1     - r3;
 
 	      r3     = bitrev12(bit++);
               x0     = x + ((r3 ^ 0xfff)>>shift) -1;
@@ -371,18 +318,19 @@ STIN void mdct_bitreverse(mdct_lookup *init,
 
               r0     = x0[1]  - x1[1];
               r1     = x0[0]  + x1[0];
-              r2     = MULT30(r1     , T[2] )  + MULT30(r0 , T[3]);
-              r3     = MULT30(r1     , T[3] )  - MULT30(r0 , T[2]);
+	      T     += step;
+	      V     -= step;
+              r2     = MULT32(r0 , *T) - MULT32(r1 , *V);
+              r3     = MULT32(r1 , *T) + MULT32(r0 , *V);
 
-              r0     = (x0[1] + x1[1])/2;
-              r1     = (x0[0] - x1[0])/2;
+              r0     = (x0[1] + x1[1])>>1;
+              r1     = (x0[0] - x1[0])>>1;
       
-	      w0[2]  = r0     + r2;
-	      w1[0]  = r0     - r2;
-	      w0[3]  = r1     + r3;
-	      w1[1]  = r3     - r1;
+	      w0[2]  = r0     - r2;
+	      w1[0]  = r0     + r2;
+	      w0[3]  = r1     - r3;
+	      w1[1]  =-r1     - r3;
 
-	      T     += 4;
 	      w0    += 4;
 
   }while(w0<w1);
@@ -391,88 +339,104 @@ STIN void mdct_bitreverse(mdct_lookup *init,
 void mdct_backward(int n, DATA_TYPE *in, DATA_TYPE *out){
   int n2=n>>1;
   int n4=n>>2;
-  mdct_lookup init;
   DATA_TYPE *iX;
   DATA_TYPE *oX;
   DATA_TYPE *T;
   DATA_TYPE *V;
+  int shift;
   int step;
 
-  mdct_init(&init,n);
-  step=1<<(13-(init.log2n));
+  for (shift=6;!(n&(1<<shift));shift++);
+  shift=13-shift;
+  step=2<<shift;
    
   /* rotate */
 
   iX            = in+n2-7;
   oX            = out+n2+n4;
-  T             = quarter_sin;
-  V             = quarter_sin+1024;
+  T             = sin_lookup-step;
+  V             = sin_lookup+2048+step;
 
   do{
 
     oX         -= 4;
-    oX[2]       = MULT30(-iX[6] , *V) - MULT30(iX[4]  , *T);
-    oX[3]       = MULT30 (iX[4] , *V) - MULT30(iX[6]  , *T);
-    T          += step;
-    V          -= step;
-    oX[0]       = MULT30(-iX[2] , *V) - MULT30(iX[0]  , *T);
-    oX[1]       = MULT30 (iX[0] , *V) - MULT30(iX[2]  , *T);
-    iX         -= 8;
+
     T          += step;
     V	       -= step;
+    oX[2]       = MULT31(iX[4] , *T) + MULT31(iX[6] , *V);
+    oX[3]       = MULT31(iX[6] , *T) - MULT31(iX[4] , *V);
+    T          += step;
+    V          -= step;
+    oX[0]       = MULT31(iX[0] , *T) + MULT31(iX[2] , *V);
+    oX[1]       = MULT31(iX[2] , *T) - MULT31(iX[0] , *V);
+
+    iX         -= 8;
 
   }while(iX>=in);
 
   iX            = in+n2-8;
   oX            = out+n2+n4;
-  T             = quarter_sin;
-  V             = quarter_sin+1024;
+  T             = sin_lookup;
+  V             = sin_lookup+2048;
 
   do{
    
-    V          -= step;
     T          += step;
-    oX[0]       =  MULT30 (iX[4] ,  *V) + MULT30(iX[6] , -*T);
-    oX[1]       =  MULT30 (iX[4] , -*T) - MULT30(iX[6] ,  *V);
     V          -= step;
+    oX[0]       = MULT31(iX[6] , *T) - MULT31(iX[4] , *V);
+    oX[1]       = MULT31(iX[4] , *T) + MULT31(iX[6] , *V);
     T          += step;
-    oX[2]       =  MULT30 (iX[0] ,  *V) + MULT30(iX[2] , -*T);
-    oX[3]       =  MULT30 (iX[0] , -*T) - MULT30(iX[2] ,  *V);
+    V          -= step;
+    oX[2]       = MULT31(iX[2] , *T) - MULT31(iX[0] , *V);
+    oX[3]       = MULT31(iX[0] , *T) + MULT31(iX[2] , *V);
     
     iX         -= 8;
     oX         += 4;
 
   }while(iX>=in);
 
-  mdct_butterflies(&init,out+n2,n2,13-(init.log2n));
-  mdct_bitreverse(&init,out,13-init.log2n);
+  mdct_butterflies(out+n2,n2,shift);
+  mdct_bitreverse(out,n,step,shift);
 
-  /* roatate + window */
+  /* rotate + window */
 
+  step>>=2;
   {
     DATA_TYPE *oX1=out+n2+n4;
     DATA_TYPE *oX2=out+n2+n4;
     DATA_TYPE *iX =out;
-    T             =init.trig;
+    T             =sin_lookup-(step>>1);
+    V             =sin_lookup+2048+(step>>1);
     
     do{
       oX1-=4;
 
-      oX1[3]  =  MULT30 (iX[0] , T[1]) - MULT30(iX[1] , T[0]);
-      oX2[0]  =-(MULT30 (iX[0] , T[0]) + MULT30(iX[1] , T[1]));
+      T      += step;
+      V      -= step;
+      oX1[3]  =  MULT31 (iX[0] , *T) - MULT31(iX[1] , *V);
+      oX2[0]  =-(MULT31 (iX[0] , *V) + MULT31(iX[1] , *T));
 
-      oX1[2]  =  MULT30 (iX[2] , T[3]) - MULT30(iX[3] , T[2]);
-      oX2[1]  =-(MULT30 (iX[2] , T[2]) + MULT30(iX[3] , T[3]));
+      T      += step;
+      V      -= step;
+      oX1[2]  =  MULT31 (iX[2] , *T) - MULT31(iX[3] , *V);
+      oX2[1]  =-(MULT31 (iX[2] , *V) + MULT31(iX[3] , *T));
 
-      oX1[1]  =  MULT30 (iX[4] , T[5]) - MULT30(iX[5] , T[4]);
-      oX2[2]  =-(MULT30 (iX[4] , T[4]) + MULT30(iX[5] , T[5]));
+      if(!step) T++,V--;
 
-      oX1[0]  =  MULT30 (iX[6] , T[7]) - MULT30(iX[7] , T[6]);
-      oX2[3]  =-(MULT30 (iX[6] , T[6]) + MULT30(iX[7] , T[7]));
+      T      += step;
+      V      -= step;
+      oX1[1]  =  MULT31 (iX[4] , *T) - MULT31(iX[5] , *V);
+      oX2[2]  =-(MULT31 (iX[4] , *V) + MULT31(iX[5] , *T));
+
+      T      += step;
+      V      -= step;
+      oX1[0]  =  MULT31 (iX[6] , *T) - MULT31(iX[7] , *V);
+      oX2[3]  =-(MULT31 (iX[6] , *V) + MULT31(iX[7] , *T));
+
+      if(!step) T++,V--;
 
       oX2+=4;
       iX    +=   8;
-      T     +=   8;
     }while(iX<oX1);
 
     iX=out+n2+n4;
@@ -494,6 +458,7 @@ void mdct_backward(int n, DATA_TYPE *in, DATA_TYPE *out){
     iX=out+n2+n4;
     oX1=out+n2+n4;
     oX2=out+n2;
+
     do{
       oX1-=4;
       oX1[0]= iX[3];
