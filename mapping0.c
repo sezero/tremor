@@ -85,6 +85,9 @@ static void _vorbis_apply_window(ogg_int32_t *d,
 
 void mapping_clear_info(vorbis_info_mapping *info){
   if(info){
+    if(info->chmuxlist)_ogg_free(info->chmuxlist);
+    if(info->submaplist)_ogg_free(info->submaplist);
+    if(info->coupling)_ogg_free(info->coupling);
     memset(info,0,sizeof(*info));
   }
 }
@@ -113,10 +116,12 @@ int mapping_info_unpack(vorbis_info_mapping *info,vorbis_info *vi,
 
   if(oggpack_read(opb,1)){
     info->coupling_steps=oggpack_read(opb,8)+1;
-
+    info->coupling=
+      _ogg_malloc(info->coupling_steps*sizeof(*info->coupling));
+    
     for(i=0;i<info->coupling_steps;i++){
-      int testM=info->coupling_mag[i]=oggpack_read(opb,ilog(vi->channels));
-      int testA=info->coupling_ang[i]=oggpack_read(opb,ilog(vi->channels));
+      int testM=info->coupling[i].mag=oggpack_read(opb,ilog(vi->channels));
+      int testA=info->coupling[i].ang=oggpack_read(opb,ilog(vi->channels));
 
       if(testM<0 || 
 	 testA<0 || 
@@ -130,17 +135,20 @@ int mapping_info_unpack(vorbis_info_mapping *info,vorbis_info *vi,
   if(oggpack_read(opb,2)>0)goto err_out; /* 2,3:reserved */
     
   if(info->submaps>1){
+    info->chmuxlist=_ogg_malloc(sizeof(*info->chmuxlist)*vi->channels);
     for(i=0;i<vi->channels;i++){
       info->chmuxlist[i]=oggpack_read(opb,4);
       if(info->chmuxlist[i]>=info->submaps)goto err_out;
     }
   }
+
+  info->submaplist=_ogg_malloc(sizeof(*info->submaplist)*info->submaps);
   for(i=0;i<info->submaps;i++){
     int temp=oggpack_read(opb,8);
-    info->floorsubmap[i]=oggpack_read(opb,8);
-    if(info->floorsubmap[i]>=ci->floors)goto err_out;
-    info->residuesubmap[i]=oggpack_read(opb,8);
-    if(info->residuesubmap[i]>=ci->residues)goto err_out;
+    info->submaplist[i].floor=oggpack_read(opb,8);
+    if(info->submaplist[i].floor>=ci->floors)goto err_out;
+    info->submaplist[i].residue=oggpack_read(opb,8);
+    if(info->submaplist[i].residue>=ci->residues)goto err_out;
   }
 
   return 0;
@@ -158,17 +166,24 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
   int                   i,j;
   long                  n=vb->pcmend=ci->blocksizes[vb->W];
 
-  ogg_int32_t **pcmbundle=(ogg_int32_t **)alloca(sizeof(*pcmbundle)*vi->channels);
-  int    *zerobundle=(int *)alloca(sizeof(*zerobundle)*vi->channels);
-  
-  int   *nonzero  =(int *)alloca(sizeof(*nonzero)*vi->channels);
-  void **floormemo=(void **)alloca(sizeof(*floormemo)*vi->channels);
+  ogg_int32_t **pcmbundle=
+    (ogg_int32_t **)alloca(sizeof(*pcmbundle)*vi->channels);
+  int          *zerobundle=
+    (int *)alloca(sizeof(*zerobundle)*vi->channels);
+  int          *nonzero=
+    (int *)alloca(sizeof(*nonzero)*vi->channels);
+  void        **floormemo=
+    (void **)alloca(sizeof(*floormemo)*vi->channels);
   
   /* recover the spectral envelope; store it in the PCM vector for now */
   for(i=0;i<vi->channels;i++){
-    int submap=info->chmuxlist[i];
-    int floorno=info->floorsubmap[submap];
-
+    int submap=0;
+    int floorno;
+    
+    if(info->submaps>1)
+      submap=info->chmuxlist[i];
+    floorno=info->submaplist[submap].floor;
+    
     if(ci->floor_type[floorno]){
       /* floor 1 */
       floormemo[i]=floor1_inverse1(vb,ci->floor_param[floorno]);
@@ -186,10 +201,10 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
 
   /* channel coupling can 'dirty' the nonzero listing */
   for(i=0;i<info->coupling_steps;i++){
-    if(nonzero[info->coupling_mag[i]] ||
-       nonzero[info->coupling_ang[i]]){
-      nonzero[info->coupling_mag[i]]=1; 
-      nonzero[info->coupling_ang[i]]=1; 
+    if(nonzero[info->coupling[i].mag] ||
+       nonzero[info->coupling[i].ang]){
+      nonzero[info->coupling[i].mag]=1; 
+      nonzero[info->coupling[i].ang]=1; 
     }
   }
 
@@ -197,7 +212,7 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
   for(i=0;i<info->submaps;i++){
     int ch_in_bundle=0;
     for(j=0;j<vi->channels;j++){
-      if(info->chmuxlist[j]==i){
+      if(!info->chmuxlist || info->chmuxlist[j]==i){
 	if(nonzero[j])
 	  zerobundle[ch_in_bundle]=1;
 	else
@@ -206,7 +221,7 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
       }
     }
     
-    res_inverse(vb,ci->residue_param+info->residuesubmap[i],
+    res_inverse(vb,ci->residue_param+info->submaplist[i].residue,
 		pcmbundle,zerobundle,ch_in_bundle);
   }
 
@@ -215,8 +230,8 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
 
   /* channel coupling */
   for(i=info->coupling_steps-1;i>=0;i--){
-    ogg_int32_t *pcmM=vb->pcm[info->coupling_mag[i]];
-    ogg_int32_t *pcmA=vb->pcm[info->coupling_ang[i]];
+    ogg_int32_t *pcmM=vb->pcm[info->coupling[i].mag];
+    ogg_int32_t *pcmA=vb->pcm[info->coupling[i].ang];
     
     for(j=0;j<n/2;j++){
       ogg_int32_t mag=pcmM[j];
@@ -247,8 +262,12 @@ int mapping_inverse(vorbis_block *vb,vorbis_info_mapping *info){
   /* compute and apply spectral envelope */
   for(i=0;i<vi->channels;i++){
     ogg_int32_t *pcm=vb->pcm[i];
-    int submap=info->chmuxlist[i];
-    int floorno=info->floorsubmap[submap];
+    int submap=0;
+    int floorno;
+
+    if(info->submaps>1)
+      submap=info->chmuxlist[i];
+    floorno=info->submaplist[submap].floor;
 
     if(ci->floor_type[floorno]){
       /* floor 1 */

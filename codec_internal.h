@@ -104,25 +104,29 @@ extern int res_inverse(vorbis_block *vb,vorbis_info_residue *info,
 
 /* mode ************************************************************/
 typedef struct {
-  int blockflag;
-  int mapping;
+  unsigned char blockflag;
+  unsigned char mapping;
 } vorbis_info_mode;
 
 /* Mapping backend generic *****************************************/
+typedef struct coupling_step{
+  unsigned char mag;
+  unsigned char ang;
+} coupling_step;
+
+typedef struct submap{
+  char floor;
+  char residue;
+} submap;
 
 typedef struct vorbis_info_mapping{
-  int   submaps;  /* <= 16 */
-  int   chmuxlist[256];   /* up to 256 channels in a Vorbis stream */
+  int            submaps; 
   
-  int   floorsubmap[16];   /* [mux] submap to floors */
-  int   residuesubmap[16]; /* [mux] submap to residue */
+  unsigned char *chmuxlist;
+  submap        *submaplist;
 
-  int   psy[2]; /* by blocktype; impulse/padding for short,
-                   transition/normal for long */
-
-  int   coupling_steps;
-  int   coupling_mag[256];
-  int   coupling_ang[256];
+  int            coupling_steps;
+  coupling_step *coupling;
 } vorbis_info_mapping;
 
 extern int mapping_info_unpack(vorbis_info_mapping *,vorbis_info *,
