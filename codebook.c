@@ -179,7 +179,6 @@ static int _make_words(char *l,long n,ogg_uint32_t *r,long quantvals,
   return 0;
 }
 
-//#include <stdio.h>
 static int _make_decode_table(codebook *s,char *lengthlist,long quantvals,
 			      oggpack_buffer *opb,int maptype){
   int i;
@@ -190,10 +189,7 @@ static int _make_decode_table(codebook *s,char *lengthlist,long quantvals,
     work=alloca((s->used_entries*2-2)*sizeof(*work));
 
   if(_make_words(lengthlist,s->entries,work,quantvals,s,opb,maptype))return 1;
-  if(s->dec_nodeb==4){
-    //fprintf(stderr,"32/32\n");
-    return 0;
-  }
+  if(s->dec_nodeb==4) return 0;
 
   s->dec_table=_ogg_malloc((s->used_entries*(s->dec_leafw+1)-2)*
 			   s->dec_nodeb);
@@ -201,14 +197,11 @@ static int _make_decode_table(codebook *s,char *lengthlist,long quantvals,
   if(s->dec_leafw==1){
     switch(s->dec_nodeb){
     case 1:
-      //fprintf(stderr,"8/8\n");
-      
       for(i=0;i<s->used_entries*2-2;i++)
 	  ((unsigned char *)s->dec_table)[i]=
 	    ((work[i] & 0x80000000UL) >> 24) | work[i];
       break;
     case 2:
-      //fprintf(stderr,"16/16\n");
       for(i=0;i<s->used_entries*2-2;i++)
 	  ((ogg_uint16_t *)s->dec_table)[i]=
 	    ((work[i] & 0x80000000UL) >> 16) | work[i];
@@ -221,7 +214,6 @@ static int _make_decode_table(codebook *s,char *lengthlist,long quantvals,
     long top=s->used_entries*3-2;
     if(s->dec_nodeb==1){
       unsigned char *out=(unsigned char *)s->dec_table;
-      //fprintf(stderr,"8/16\n");
 
       for(i=s->used_entries*2-4;i>=0;i-=2){
 	if(work[i]&0x80000000UL){
@@ -253,7 +245,6 @@ static int _make_decode_table(codebook *s,char *lengthlist,long quantvals,
       }
     }else{
       ogg_uint16_t *out=(ogg_uint16_t *)s->dec_table;
-      //fprintf(stderr,"16/32\n");
       for(i=s->used_entries*2-4;i>=0;i-=2){
 	if(work[i]&0x80000000UL){
 	  if(work[i+1]&0x80000000UL){
@@ -411,9 +402,10 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
     s->q_del=_float32_unpack(oggpack_read(opb,32),&s->q_delp);
     s->q_bits=oggpack_read(opb,4)+1;
     s->q_seq=oggpack_read(opb,1);
-  }
 
-  //fprintf(stderr,"%ld/%ld x%d b%d (maptype:%d, ",s->used_entries,s->entries,s->dim,s->q_bits,maptype);
+    s->q_del>>=s->q_bits;
+    s->q_delp+=s->q_bits;
+  }
 
   switch(maptype){
   case 0:
@@ -426,7 +418,6 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
     s->dec_nodeb=_determine_node_bytes(s->used_entries,_ilog(s->entries)/8+1); 
     s->dec_leafw=_determine_leaf_words(s->dec_nodeb,_ilog(s->entries)/8+1); 
     s->dec_type=0;
-    //fprintf(stderr,"dec_type:0) ");
     
     if(_make_decode_table(s,lengthlist,quantvals,opb,maptype)) goto _errout;
     break;
@@ -446,7 +437,6 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
       
       if(total1<=4 && total1<=total2){
 	/* use dec_type 1: vector of packed values */
-	//fprintf(stderr,"dec_type:1) ");
 
 	/* need quantized values before  */
 	s->q_val=alloca(sizeof(ogg_uint16_t)*quantvals);
@@ -473,7 +463,6 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
 	
       }else{
 	/* use dec_type 2: packed vector of column offsets */
-	//fprintf(stderr,"dec_type:2) ");
 
 	/* need quantized values before */
 	if(s->q_bits<=8){
@@ -507,7 +496,6 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
 
     if( (s->q_bits*s->dim+8)/8 <=4){ /* remember flag bit */
       /* use dec_type 1: vector of packed values */
-      //fprintf(stderr,"dec_type:1) ");
 
       s->dec_type=1;
       s->dec_nodeb=_determine_node_bytes(s->used_entries,(s->q_bits*s->dim+8)/8); 
@@ -516,7 +504,6 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
       
     }else{
       /* use dec_type 3: scalar offset into packed value array */
-      //fprintf(stderr,"dec_type:3) ");
 
       s->dec_type=3;
       s->dec_nodeb=_determine_node_bytes(s->used_entries,_ilog(s->used_entries-1)/8+1); 
@@ -686,9 +673,8 @@ int decode_map(codebook *s, oggpack_buffer *b, ogg_int32_t *v, int point){
 
   /* we have the unpacked multiplicands; compute final vals */
   {
-    int shiftM=point-s->q_delp-s->q_bits;
+    int shiftM=point-s->q_delp;
     ogg_int32_t add=point-s->q_minp;
-    ogg_int32_t del=s->q_del>>s->q_bits;
     if(add>0)
       add= s->q_min >> add;
     else
@@ -696,10 +682,10 @@ int decode_map(codebook *s, oggpack_buffer *b, ogg_int32_t *v, int point){
 
     if(shiftM>0)
       for(i=0;i<s->dim;i++)
-	v[i]= add + ((v[i] * del) >> shiftM);
+	v[i]= add + ((v[i] * s->q_del) >> shiftM);
     else
       for(i=0;i<s->dim;i++)
-	v[i]= add + ((v[i] * del) << -shiftM);
+	v[i]= add + ((v[i] * s->q_del) << -shiftM);
 
     if(s->q_seq)
       for(i=1;i<s->dim;i++)
