@@ -37,7 +37,7 @@ typedef void vorbis_info_floor;
 typedef void vorbis_info_residue;
 typedef void vorbis_info_mapping;
 
-typedef struct backend_lookup_state {
+typedef struct private_state {
   /* local lookup storage */
   ogg_int32_t               *window[2];
 
@@ -45,7 +45,9 @@ typedef struct backend_lookup_state {
   int                     modebits;
   vorbis_look_mapping   **mode;
 
-} backend_lookup_state;
+  ogg_int64_t sample_count;
+
+} private_state;
 
 /* codec_setup_info contains all the setup information specific to the
    specific compression/decompression mode in progress (eg,

@@ -181,7 +181,7 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
   vorbis_dsp_state     *vd=vb->vd;
   vorbis_info          *vi=vd->vi;
   codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;
-  backend_lookup_state *b=(backend_lookup_state *)vd->backend_state;
+  private_state        *b=(private_state *)vd->backend_state;
   vorbis_look_mapping0 *look=(vorbis_look_mapping0 *)l;
   vorbis_info_mapping0 *info=look->map;
 

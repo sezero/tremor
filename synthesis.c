@@ -12,7 +12,7 @@
  ********************************************************************
 
  function: single-block PCM synthesis
- last mod: $Id: synthesis.c,v 1.2 2002/09/03 03:15:19 xiphmont Exp $
+ last mod: $Id: synthesis.c,v 1.3 2002/10/16 07:39:56 xiphmont Exp $
 
  ********************************************************************/
 
@@ -26,7 +26,7 @@
 
 int vorbis_synthesis(vorbis_block *vb,ogg_packet *op){
   vorbis_dsp_state     *vd=vb->vd;
-  backend_lookup_state *b=(backend_lookup_state *)vd->backend_state;
+  private_state        *b=(private_state *)vd->backend_state;
   vorbis_info          *vi=vd->vi;
   codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;
   oggpack_buffer       *opb=&vb->opb;
