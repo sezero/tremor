@@ -13,7 +13,7 @@
 
  function: normalized modified discrete cosine transform
            power of two length transform only [64 <= n ]
- last mod: $Id: mdct.c,v 1.9.6.2 2003/04/21 22:12:52 xiphmont Exp $
+ last mod: $Id: mdct.c,v 1.9.6.3 2003/04/22 06:58:24 xiphmont Exp $
 
  Original algorithm adapted long ago from _The use of multirate filter
  banks for coding of high quality digital audio_, by T. Sporer,
@@ -403,61 +403,80 @@ void mdct_shift_right(int n, DATA_TYPE *in, DATA_TYPE *right){
     right[i]=in[i<<1];
 }
 
-void mdct_unroll_lap(int n0,int n1,int lW,int W,
+void mdct_unroll_lap(int n0,int n1,
+		     int lW,int W,
 		     DATA_TYPE *in,
 		     DATA_TYPE *right,
 		     LOOKUP_T *w0,
 		     LOOKUP_T *w1,
 		     ogg_int16_t *out,
-		     int step){
+		     int step,
+		     int start, /* samples, this frame */
+		     int end    /* samples, this frame */){
 
   DATA_TYPE *l=in+(W&&lW ? n1>>1 : n0>>1);
   DATA_TYPE *r=right+(lW ? n1>>2 : n0>>2);
   DATA_TYPE *post;
-  LOOKUP_T *wR;
-  LOOKUP_T *wL;
-  
-  if(lW){
-    if(!W){
-      /* copy pre-lap from previous frame */
-      post=right+(n0>>2);
-      do{
-	out++ = CLIP_TO_15((*--r)>>9);
-	out+=step;
-      }while(r>post);
+  LOOKUP_T *wR=(W && lW ? w1+(n1>>1) : w0+(n0>>1));
+  LOOKUP_T *wL=(W && lW ? w1         : w0        );
+
+  int preLap=(lW && !W ? (n1>>2)-(n0>>2) : 0 );
+  int halfLap=(lW && W ? (n1>>2) : (n0>>2) );
+  int postLap=(!lW && W ? (n1>>2)-(n0>>2) : 0 );
+  int n,off;
+
+  /* preceeding direct-copy lapping from previous frame, if any */
+  if(preLap){
+    n      = (end<preLap?end:preLap);
+    off    = (start<preLap?start:preLap);
+    post   = r-n;
+    r     -= off;
+    start -= off;
+    end   -= n;
+    while(r>post){
+      out++ = CLIP_TO_15((*--r)>>9);
+      out+=step;
     }
   }
   
   /* cross-lap; two halves due to wrap-around */
-  if(W && lW){
-    wL=w1;
-    wR=w1+(n1>>1);
-    post=right+(n1>>2);
-  }else{
-    wL=w0;
-    wR=w0+(n0>>1);
-    post=right+(n0>>2);
-  }
-
-  do{
+  n      = (end<halfLap?end:halfLap);
+  off    = (start<halfLap?start:halfLap);
+  post   = r-n;
+  r     -= off;
+  l     -= off*2;
+  start -= off;
+  end   -= n;
+  while(r>post){
     l-=2;
     *out = CLIP_TO_15((MULT31(*--r,*--wR) + MULT31(*l,*wL++))>>9);
     out+=step;
-  }while(r>right);
-  do{
+  };
+
+  n      = (end<halfLap?end:halfLap);
+  off    = (start<halfLap?start:halfLap);
+  post   = r+n;
+  r     += off;
+  l     += off*2;
+  start -= off;
+  end   -= n;
+  while(r<post){
     *out = CLIP_TO_15((MULT31(*r++,*--wR) - MULT31(*l,*wL++))>>9);
     out+=step;
     l+=2;
-  }while(r<post);
+  }
 
-  if(!lW && W){
-    /* post-lap from current frame */
-    post=in+(n1>>1);
-    do{
-      *out = CLIP_TO_15((-*l)>>15);
+  /* preceeding direct-copy lapping from previous frame, if any */
+  if(postLap){
+    n      = (end<postLap?end:postLap);
+    off    = (start<postLap?start:postLap);
+    post   = l+n*2;
+    l     += off*2;
+    while(l<post){
+      *out = CLIP_TO_15((-*l)>>9);
       out+=step;
       l+=2;
-    }while(l<post);
+    }
   }
 }
 
