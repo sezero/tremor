@@ -53,7 +53,7 @@ static int ilog(unsigned int v){
 }
 
 static int icomp(const void *a,const void *b){
-  return(**(int **)a-**(int **)b);
+  return(**(ogg_uint16_t **)a-**(ogg_uint16_t **)b);
 }
 
 vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
