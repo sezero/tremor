@@ -12,7 +12,7 @@
  ********************************************************************
 
  function: stdio-based convenience library for opening/seeking/decoding
- last mod: $Id: vorbisfile.c,v 1.5 2003/03/29 03:07:21 xiphmont Exp $
+ last mod: $Id: vorbisfile.c,v 1.6 2003/03/30 23:40:56 xiphmont Exp $
 
  ********************************************************************/
 
@@ -936,7 +936,7 @@ ogg_int64_t ov_time_total(OggVorbis_File *vf,int i){
       acc+=ov_time_total(vf,i);
     return(acc);
   }else{
-    return(((ogg_int64_t)vf->pcmlengths[i])*1000/vf->vi[i].rate);
+    return(((ogg_int64_t)vf->pcmlengths[i*2+1])*1000/vf->vi[i].rate);
   }
 }
 
@@ -1446,7 +1446,7 @@ ogg_int64_t ov_pcm_tell(OggVorbis_File *vf){
 ogg_int64_t ov_time_tell(OggVorbis_File *vf){
   int link=0;
   ogg_int64_t pcm_total=0;
-  ogg_int64_t time_total=0.f;
+  ogg_int64_t time_total=0;
   
   if(vf->ready_state<OPENED)return(OV_EINVAL);
   if(vf->seekable){
