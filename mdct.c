@@ -2,15 +2,18 @@
  *                                                                  *
  * THIS FILE IS PART OF THE OggVorbis 'TREMOR' CODEC SOURCE CODE.   *
  *                                                                  *
+ * USE, DISTRIBUTION AND REPRODUCTION OF THIS LIBRARY SOURCE IS     *
+ * GOVERNED BY A BSD-STYLE SOURCE LICENSE INCLUDED WITH THIS SOURCE *
+ * IN 'COPYING'. PLEASE READ THESE TERMS BEFORE DISTRIBUTING.       *
+ *                                                                  *
  * THE OggVorbis 'TREMOR' SOURCE CODE IS (C) COPYRIGHT 1994-2002    *
  * BY THE Xiph.Org FOUNDATION http://www.xiph.org/                  *
- * ALL REDISTRIBUTION RIGHTS RESERVED.                              *
  *                                                                  *
  ********************************************************************
 
  function: normalized modified discrete cosine transform
            power of two length transform only [64 <= n ]
- last mod: $Id: mdct.c,v 1.1 2002/09/02 22:13:55 xiphmont Exp $
+ last mod: $Id: mdct.c,v 1.2 2002/09/03 03:15:19 xiphmont Exp $
 
  Original algorithm adapted long ago from _The use of multirate filter
  banks for coding of high quality digital audio_, by T. Sporer,
