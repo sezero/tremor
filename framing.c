@@ -878,10 +878,11 @@ static void _span_queued_page(ogg_stream_state *os){
       
       /* process/prepare next page, if any */
 
+      long pageno;
+      oggbyte_buffer ob;
       ogg_page og;               /* only for parsing header values */
       og.header=os->header_tail; /* only for parsing header values */
-      long pageno=ogg_page_pageno(&og);
-      oggbyte_buffer ob;
+      pageno=ogg_page_pageno(&og);
 
       oggbyte_init(&ob,os->header_tail);
       os->lacing_fill=oggbyte_read1(&ob,26);
