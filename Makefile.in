@@ -418,7 +418,7 @@ maintainer-clean-generic clean mostlyclean distclean maintainer-clean
 
 
 example:
-	ln -s . vorbis
+	-ln -fs . vorbis
 	$(MAKE) ivorbisfile_example
 
 debug:

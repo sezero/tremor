@@ -24,7 +24,7 @@ ivorbisfile_example_LDFLAGS = -static
 ivorbisfile_example_LDADD = libvorbisidec.la
 
 example:
-	ln -s . vorbis
+	-ln -fs . vorbis
 	$(MAKE) ivorbisfile_example
 
 debug:
