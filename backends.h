@@ -33,10 +33,7 @@
 /* Floor backend generic *****************************************/
 typedef struct{
   vorbis_info_floor     *(*unpack)(vorbis_info *,oggpack_buffer *);
-  vorbis_look_floor     *(*look)  (vorbis_dsp_state *,vorbis_info_mode *,
-				   vorbis_info_floor *);
   void (*free_info) (vorbis_info_floor *);
-  void (*free_look) (vorbis_look_floor *);
   void *(*inverse1)  (struct vorbis_block *,vorbis_look_floor *);
   int   (*inverse2)  (struct vorbis_block *,vorbis_look_floor *,
 		     void *buffer,ogg_int32_t *);
@@ -68,8 +65,14 @@ typedef struct{
   int   class_subbook[VIF_CLASS][8]; /* [VIF_CLASS][subs] */
 
 
-  int   mult;                      /* 1 2 3 or 4 */ 
-  int   postlist[VIF_POSIT+2];    /* first two implicit */ 
+  int          mult;                      /* 1 2 3 or 4 */ 
+  ogg_uint16_t postlist[VIF_POSIT+2];     /* first two implicit */ 
+
+  /* useful, generated values */
+  char         forward_index[VIF_POSIT+2];
+  char         hineighbor[VIF_POSIT];
+  char         loneighbor[VIF_POSIT];
+  int          posts;
 
 } vorbis_info_floor1;
 

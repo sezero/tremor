@@ -78,8 +78,8 @@ typedef struct codec_setup_info {
   int                     map_type[64];
   vorbis_info_mapping    *map_param[64];
   int                     time_type[64];
-  int                     floor_type[64];
-  vorbis_info_floor      *floor_param[64];
+  char                   *floor_type;
+  vorbis_info_floor      **floor_param;
   int                     residue_type[64];
   vorbis_info_residue    *residue_param[64];
   codebook               *book_param;

@@ -41,8 +41,6 @@ typedef struct {
   vorbis_info_mode *mode;
   vorbis_info_mapping0 *map;
 
-  vorbis_look_floor **floor_look;
-
   vorbis_look_residue **residue_look;
 
   vorbis_func_floor **floor_func;
@@ -67,13 +65,11 @@ static void mapping0_free_look(vorbis_look_mapping *look){
   if(l){
 
     for(i=0;i<l->map->submaps;i++){
-      l->floor_func[i]->free_look(l->floor_look[i]);
       l->residue_func[i]->free_look(l->residue_look[i]);
     }
 
     _ogg_free(l->floor_func);
     _ogg_free(l->residue_func);
-    _ogg_free(l->floor_look);
     _ogg_free(l->residue_look);
     memset(l,0,sizeof(*l));
     _ogg_free(l);
@@ -89,8 +85,6 @@ static vorbis_look_mapping *mapping0_look(vorbis_dsp_state *vd,vorbis_info_mode 
   vorbis_info_mapping0 *info=look->map=(vorbis_info_mapping0 *)m;
   look->mode=vm;
   
-  look->floor_look=(vorbis_look_floor **)_ogg_calloc(info->submaps,sizeof(*look->floor_look));
-
   look->residue_look=(vorbis_look_residue **)_ogg_calloc(info->submaps,sizeof(*look->residue_look));
 
   look->floor_func=(vorbis_func_floor **)_ogg_calloc(info->submaps,sizeof(*look->floor_func));
@@ -101,8 +95,6 @@ static vorbis_look_mapping *mapping0_look(vorbis_dsp_state *vd,vorbis_info_mode 
     int resnum=info->residuesubmap[i];
 
     look->floor_func[i]=_floor_P[ci->floor_type[floornum]];
-    look->floor_look[i]=look->floor_func[i]->
-      look(vd,vm,ci->floor_param[floornum]);
     look->residue_func[i]=_residue_P[ci->residue_type[resnum]];
     look->residue_look[i]=look->residue_func[i]->
       look(vd,vm,ci->residue_param[resnum]);
@@ -198,7 +190,7 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
   for(i=0;i<vi->channels;i++){
     int submap=info->chmuxlist[i];
     floormemo[i]=look->floor_func[submap]->
-      inverse1(vb,look->floor_look[submap]);
+      inverse1(vb,ci->floor_param[info->floorsubmap[submap]]);
     if(floormemo[i])
       nonzero[i]=1;
     else
@@ -271,7 +263,8 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
     ogg_int32_t *pcm=vb->pcm[i];
     int submap=info->chmuxlist[i];
     look->floor_func[submap]->
-      inverse2(vb,look->floor_look[submap],floormemo[i],pcm);
+      inverse2(vb,ci->floor_param[info->floorsubmap[submap]],
+	       floormemo[i],pcm);
   }
 
   //for(j=0;j<vi->channels;j++)

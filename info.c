@@ -126,9 +126,13 @@ void vorbis_info_clear(vorbis_info *vi){
     for(i=0;i<ci->maps;i++) /* unpack does the range checking */
       _mapping_P[ci->map_type[i]]->free_info(ci->map_param[i]);
 
-    for(i=0;i<ci->floors;i++) /* unpack does the range checking */
-      _floor_P[ci->floor_type[i]]->free_info(ci->floor_param[i]);
-    
+    if(ci->floor_param){
+      for(i=0;i<ci->floors;i++) /* unpack does the range checking */
+	_floor_P[ci->floor_type[i]]->free_info(ci->floor_param[i]);
+      _ogg_free(ci->floor_param);
+      _ogg_free(ci->floor_type);
+    }
+
     for(i=0;i<ci->residues;i++) /* unpack does the range checking */
       _residue_P[ci->residue_type[i]]->free_info(ci->residue_param[i]);
 
@@ -226,6 +230,8 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
 
   /* floor backend settings */
   ci->floors=oggpack_read(opb,6)+1;
+  ci->floor_param=_ogg_malloc(sizeof(*ci->floor_param)*ci->floors);
+  ci->floor_type=_ogg_malloc(sizeof(*ci->floor_type)*ci->floors);
   for(i=0;i<ci->floors;i++){
     ci->floor_type[i]=oggpack_read(opb,16);
     if(ci->floor_type[i]<0 || ci->floor_type[i]>=VI_FLOORB)goto err_out;
