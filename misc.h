@@ -30,7 +30,7 @@ extern void _analysis_output(char *base,int i,ogg_int32_t *v,int point,
 #ifndef _V_WIDE_MATH
 #define _V_WIDE_MATH
 
-#include <endian.h>
+#include <sys/types.h>
 
 #if BYTE_ORDER==LITTLE_ENDIAN
 union magic {
