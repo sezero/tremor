@@ -23,6 +23,10 @@ ivorbisfile_example_SOURCES = ivorbisfile_example.c
 ivorbisfile_example_LDFLAGS = -static 
 ivorbisfile_example_LDADD = libvorbisidec.la
 
+includedir = $(prefix)/include/tremor
+
+include_HEADERS = ivorbiscodec.h ivorbisfile.h ogg.h os_types.h config_types.h
+
 example:
 	-ln -fs . vorbis
 	$(MAKE) ivorbisfile_example
