@@ -1270,7 +1270,7 @@ ogg_int64_t ov_pcm_tell(OggVorbis_File *vf){
 ogg_int64_t ov_time_tell(OggVorbis_File *vf){
   /* translate time to PCM position and call ov_pcm_seek */
 
-  int link=-1;
+  int link=0;
   ogg_int64_t pcm_total=0;
   ogg_int64_t time_total=0;
   
