@@ -26,8 +26,6 @@ extern "C"
 #include <stdio.h>
 #include "ivorbiscodec.h"
 
-#define CHUNKSIZE 1024
-
 /* The function prototypes for the callbacks are basically the same as for
  * the stdio functions fread, fseek, fclose, ftell. 
  * The one difference is that the FILE * arguments have been replaced with
@@ -45,12 +43,6 @@ typedef struct {
   long   (*tell_func)  (void *datasource);
 } ov_callbacks;
 
-#define  NOTOPEN   0
-#define  PARTOPEN  1
-#define  OPENED    2
-#define  STREAMSET 3
-#define  INITSET   4
-
 typedef struct OggVorbis_File {
   void            *datasource; /* Pointer to a FILE *, etc. */
   int              seekable;
@@ -65,8 +57,8 @@ typedef struct OggVorbis_File {
   ogg_int64_t     *dataoffsets;
   ogg_uint32_t    *serialnos;
   ogg_int64_t     *pcmlengths;
-  vorbis_info     *vi;
-  vorbis_comment  *vc;
+  vorbis_info     vi;
+  vorbis_comment  vc;
 
   /* Decoding working state local storage */
   ogg_int64_t      pcm_offset;

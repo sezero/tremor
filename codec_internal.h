@@ -18,6 +18,8 @@
 #ifndef _V_CODECI_H_
 #define _V_CODECI_H_
 
+#define CHUNKSIZE 1024
+
 #include "codebook.h"
 #include "ivorbiscodec.h"
 

@@ -13,7 +13,7 @@
 
  function: normalized modified discrete cosine transform
            power of two length transform only [64 <= n ]
- last mod: $Id: mdct.c,v 1.9.6.4 2003/04/22 09:00:49 xiphmont Exp $
+ last mod: $Id: mdct.c,v 1.9.6.5 2003/04/29 04:03:27 xiphmont Exp $
 
  Original algorithm adapted long ago from _The use of multirate filter
  banks for coding of high quality digital audio_, by T. Sporer,
@@ -446,12 +446,14 @@ void mdct_unroll_lap(int n0,int n1,
   r     -= off;
   l     -= off*2;
   start -= off;
+  wR    -= off;
+  wL    += off;
   end   -= n;
   while(r>post){
     l-=2;
     *out = CLIP_TO_15((MULT31(*--r,*--wR) + MULT31(*l,*wL++))>>9);
     out+=step;
-  };
+  }
 
   n      = (end<halfLap?end:halfLap);
   off    = (start<halfLap?start:halfLap);
@@ -460,6 +462,8 @@ void mdct_unroll_lap(int n0,int n1,
   l     += off*2;
   start -= off;
   end   -= n;
+  wR    -= off;
+  wL    += off;
   while(r<post){
     *out = CLIP_TO_15((MULT31(*r++,*--wR) - MULT31(*l,*wL++))>>9);
     out+=step;

@@ -63,16 +63,6 @@ static inline ogg_int32_t vorbis_fromdBlook_i(long a){
 }
 #endif
 
-#if 0
-static inline ogg_int32_t vorbis_fromdBlook_i(long a){
-  int i=(-a)>>(12-FROMdB2_SHIFT);
-  if(i<0) return 0x7fffffff;
-  if(i>=(FROMdB_LOOKUP_SZ<<FROMdB_SHIFT))return 0;
-  
-  return FROMdB_LOOKUP[i>>FROMdB_SHIFT] * FROMdB2_LOOKUP[i&FROMdB2_MASK];
-}
-#endif
-
 /* interpolated lookup based cos function, domain 0 to PI only */
 /* a is in 0.16 format, where 0==0, 2^^16-1==PI, return 0.14 */
 static inline ogg_int32_t vorbis_coslook_i(long a){
