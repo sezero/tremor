@@ -18,7 +18,7 @@
 #ifndef _V_RANDOM_H_
 #define _V_RANDOM_H_
 #include "ivorbiscodec.h"
-#include "os_types.h"
+#include "os.h"
 
 #include "asm_arm.h"
   

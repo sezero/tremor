@@ -22,7 +22,6 @@
 #include "codec_internal.h"
 #include "registry.h"
 #include "misc.h"
-#include "os.h"
 
 int vorbis_synthesis(vorbis_block *vb,ogg_packet *op,int decodep){
   vorbis_dsp_state     *vd=vb->vd;

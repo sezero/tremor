@@ -28,7 +28,6 @@
 #include "registry.h"
 #include "window.h"
 #include "misc.h"
-#include "os.h"
 
 /* helpers */
 static void _v_readstring(oggpack_buffer *o,char *buf,int bytes){

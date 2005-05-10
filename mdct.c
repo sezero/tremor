@@ -33,7 +33,6 @@
  ********************************************************************/
 
 #include "ivorbiscodec.h"
-#include "os.h"
 #include "misc.h"
 #include "mdct.h"
 #include "mdct_lookup.h"

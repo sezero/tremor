@@ -19,7 +19,6 @@
 #include <math.h>
 #include <string.h>
 #include "ogg.h"
-#include "os.h"
 #include "misc.h"
 #include "ivorbiscodec.h"
 #include "codebook.h"

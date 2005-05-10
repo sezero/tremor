@@ -22,7 +22,6 @@
 #include "ivorbiscodec.h"
 #include "codebook.h"
 #include "misc.h"
-#include "os.h"
 
 /* unpacks a codebook from the packet buffer into the codebook struct,
    readies the codebook auxiliary structures for decode *************/
