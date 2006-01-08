@@ -54,14 +54,15 @@ else
 
         case $host in 
         arm-*-*)
-                DEBUG="-g -W -D__NO_MATH_INLINES -fsigned-char -D_ARM_ASSEM_"
+                DEBUG="-g -Wall -D__NO_MATH_INLINES -fsigned-char 
+-D_ARM_ASSEM_"
                 CFLAGS="-O2 -D_ARM_ASSEM_ -fsigned-char"
                 PROFILE="-W -pg -g -O2 -D_ARM_ASSEM_ -fsigned-char -fno-inline-functions";;
 
         *)
-                DEBUG="-g -W -D__NO_MATH_INLINES -fsigned-char"
-                CFLAGS="-O2 -fsigned-char"
-                PROFILE="-W -pg -g -O2 -fsigned-char -fno-inline-functions";;
+                DEBUG="-g -Wall -D__NO_MATH_INLINES -fsigned-char"
+                CFLAGS="-O2 -Wall -fsigned-char"
+                PROFILE="-Wall -pg -g -O2 -fsigned-char -fno-inline-functions";;
         esac
 fi
 CFLAGS="$CFLAGS $cflags_save -D_REENTRANT"
