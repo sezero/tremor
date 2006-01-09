@@ -21,6 +21,7 @@
 #include "os.h"
 
 #include "asm_arm.h"
+#include <stdlib.h> /* for abs() */
   
 #ifndef _V_WIDE_MATH
 #define _V_WIDE_MATH
@@ -181,6 +182,8 @@ static inline ogg_int32_t VFLOAT_MULT(ogg_int32_t a,ogg_int32_t ap,
   }else
     return 0;
 }
+
+int _ilog(unsigned int);
 
 static inline ogg_int32_t VFLOAT_MULTI(ogg_int32_t a,ogg_int32_t ap,
 				      ogg_int32_t i,
