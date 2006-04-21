@@ -147,7 +147,7 @@ static ogg_uint32_t bitreverse(ogg_uint32_t x){
   return((x>> 1)&0x55555555) | ((x<< 1)&0xaaaaaaaa);
 }
 
-static inline long decode_packed_entry_number(codebook *book, 
+STIN long decode_packed_entry_number(codebook *book, 
 					      oggpack_buffer *b){
   int  read=book->dec_maxlength;
   long lo,hi;
