@@ -29,7 +29,9 @@
 #ifndef  _LOW_ACCURACY_
 /* 64 bit multiply */
 
+#if !(defined WIN32 && defined WINCE)
 #include <sys/types.h>
+#endif
 
 #if BYTE_ORDER==LITTLE_ENDIAN
 union magic {
