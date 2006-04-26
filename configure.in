@@ -44,7 +44,7 @@ if test -z "$GCC"; then
         arm-*-*)
                 DEBUG="-g -D_ARM_ASSEM_" 
                 CFLAGS="-O -D_ARM_ASSEM_"
-                PROFILE="-p -g -O -D_ARM_ASSEM" ;;
+                PROFILE="-p -g -O -D_ARM_ASSEM_" ;;
         *)
                 DEBUG="-g"
                 CFLAGS="-O"
@@ -54,8 +54,7 @@ else
 
         case $host in 
         arm-*-*)
-                DEBUG="-g -Wall -D__NO_MATH_INLINES -fsigned-char 
--D_ARM_ASSEM_"
+                DEBUG="-g -Wall -D__NO_MATH_INLINES -fsigned-char -D_ARM_ASSEM_"
                 CFLAGS="-O2 -D_ARM_ASSEM_ -fsigned-char"
                 PROFILE="-W -pg -g -O2 -D_ARM_ASSEM_ -fsigned-char -fno-inline-functions";;
 
