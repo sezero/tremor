@@ -196,7 +196,7 @@ static int render_point(int x0,int x1,int y0,int y1,int x){
   }
 }
 
-static void render_line(int x0,int x1,int y0,int y1,ogg_int32_t *d){
+static void render_line(int n,int x0,int x1,int y0,int y1,ogg_int32_t *d){
   int dy=y1-y0;
   int adx=x1-x0;
   int ady=abs(dy);
@@ -206,11 +206,13 @@ static void render_line(int x0,int x1,int y0,int y1,ogg_int32_t *d){
   int y=y0;
   int err=0;
 
+  if(n>x1)n=x1;
   ady-=abs(base*adx);
 
-  d[x]= MULT31_SHIFT15(d[x],FLOOR_fromdB_LOOKUP[y]);
+  if(x<n)
+    d[x]= MULT31_SHIFT15(d[x],FLOOR_fromdB_LOOKUP[y]);
 
-  while(++x<x1){
+  while(++x<n){
     err=err+ady;
     if(err>=adx){
       err-=adx;
@@ -336,7 +338,7 @@ int floor1_inverse2(vorbis_dsp_state *vd,vorbis_info_floor *in,
 	hy*=info->mult;
 	hx=info->postlist[current];
 	
-	render_line(lx,hx,ly,hy,out);
+	render_line(n,lx,hx,ly,hy,out);
 	
 	lx=hx;
 	ly=hy;
