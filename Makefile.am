@@ -32,7 +32,7 @@ example:
 	$(MAKE) ivorbisfile_example
 
 debug:
-	$(MAKE) all CFLAGS="@DEBUG@" LDFLAGS="-lefence"	
+	$(MAKE) all CFLAGS="@DEBUG@" 
 
 profile:
 	$(MAKE) all CFLAGS="@PROFILE@"
