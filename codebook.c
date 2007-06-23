@@ -171,7 +171,11 @@ STIN long decode_packed_entry_number(codebook *book,
 
   while(lok<0 && read>1)
     lok = oggpack_look(b, --read);
-  if(lok<0)return -1;
+
+  if(lok<0){
+    oggpack_adv(b,1); /* force eop */
+    return -1;
+  }
 
   /* bisect search for the codeword in the ordered list */
   {
