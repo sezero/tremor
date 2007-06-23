@@ -127,7 +127,7 @@ int res_inverse(vorbis_dsp_state *vd,vorbis_info_residue *info,
 	      
 	      for(j=0;j<ch;j++){
 		int temp=vorbis_book_decode(phrasebook,&vd->opb);
-		if(oggpack_eop(&vd->opb))goto eopbreak;
+		if(temp==-1)goto eopbreak;
 		
 		/* this can be done quickly in assembly due to the quotient
 		   always being at most six bits */
@@ -191,7 +191,7 @@ int res_inverse(vorbis_dsp_state *vd,vorbis_info_residue *info,
 	    
 	    /* fetch the partition word */
 	    temp=vorbis_book_decode(phrasebook,&vd->opb);
-	    if(oggpack_eop(&vd->opb))goto eopbreak;
+	    if(temp==-1)goto eopbreak;
 	    
 	    /* this can be done quickly in assembly due to the quotient
 	       always being at most six bits */
