@@ -10,7 +10,7 @@
  *                                                                  *
  ********************************************************************/
 
-#define HEAD_ALIGN 32
+#define HEAD_ALIGN 64
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

@@ -191,7 +191,6 @@ static int _make_decode_table(codebook *s,char *lengthlist,long quantvals,
   int i;
   ogg_uint32_t *work;
 
-
   if(s->dec_nodeb==4){
     s->dec_table=_ogg_malloc((s->used_entries*2+1)*sizeof(*work));
     /* +1 (rather than -2) is to accommodate 0 and 1 sized books,
@@ -633,7 +632,7 @@ static inline ogg_uint32_t decode_packed_entry_number(codebook *book,
     oggpack_adv(b,i+1);
     return chase;
   }
-  oggpack_adv(b,read);
+  oggpack_adv(b,read+1);
   return(-1);
 }
 
