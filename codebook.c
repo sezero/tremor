@@ -194,7 +194,7 @@ STIN long decode_packed_entry_number(codebook *book,
     }
   }
   
-  oggpack_adv(b, read);
+  oggpack_adv(b, read+1);
   return(-1);
 }
 
