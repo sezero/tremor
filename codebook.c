@@ -98,6 +98,12 @@ static ogg_int32_t _float32_unpack(long val,int *point){
 /* choose the smallest supported node size that fits our decode table.
    Legal bytewidths are 1/1 1/2 2/2 2/4 4/4 */
 static int _determine_node_bytes(long used, int leafwidth){
+
+  /* special case small books to size 4 to avoid multiple special
+     cases in repack */
+  if(used<2)
+    return 4;
+
   if(leafwidth==3)leafwidth=4;
   if(_ilog(3*used-6)+1 <= leafwidth*4) 
     return leafwidth/2?leafwidth/2:1;
@@ -183,14 +189,19 @@ static int _make_decode_table(codebook *s,char *lengthlist,long quantvals,
 			      oggpack_buffer *opb,int maptype){
   int i;
   ogg_uint32_t *work;
-  if(s->dec_nodeb==4)
-    work=s->dec_table=_ogg_malloc((s->used_entries*2-2)*4);
-  else
-    work=alloca((s->used_entries*2-2)*sizeof(*work));
 
+  if(s->dec_nodeb==4){
+    s->dec_table=_ogg_malloc((s->used_entries*2+1)*sizeof(*work));
+    /* +1 (rather than -2) is to accommodate 0 and 1 sized books,
+       which are specialcased to nodeb==4 */
+    if(_make_words(lengthlist,s->entries,
+		   s->dec_table,quantvals,s,opb,maptype))return 1;
+    
+    return 0;
+  }
+
+  work=alloca((s->used_entries*2-2)*sizeof(*work));
   if(_make_words(lengthlist,s->entries,work,quantvals,s,opb,maptype))return 1;
-  if(s->dec_nodeb==4) return 0;
-
   s->dec_table=_ogg_malloc((s->used_entries*(s->dec_leafw+1)-2)*
 			   s->dec_nodeb);
     
@@ -544,7 +555,11 @@ static inline ogg_uint32_t decode_packed_entry_number(codebook *book,
   
   while(lok<0 && read>1)
     lok = oggpack_look(b, --read);
-  if(lok<0)return -1;
+
+  if(lok<0){
+    oggpack_adv(b,1); /* force eop */
+    return -1;
+  }
 
   /* chase the tree with the bits we got */
   if(book->dec_nodeb==1){
@@ -616,7 +631,7 @@ static inline ogg_uint32_t decode_packed_entry_number(codebook *book,
     oggpack_adv(b,i+1);
     return chase;
   }
-  oggpack_adv(b,read);
+  oggpack_adv(b,read+1);
   return(-1);
 }
 
@@ -698,41 +713,53 @@ int decode_map(codebook *s, oggpack_buffer *b, ogg_int32_t *v, int point){
 /* returns 0 on OK or -1 on eof *************************************/
 long vorbis_book_decodevs_add(codebook *book,ogg_int32_t *a,
 			      oggpack_buffer *b,int n,int point){
-  int step=n/book->dim;
-  ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
-  int i,j,o;
-
-  for (j=0;j<step;j++){
-    if(decode_map(book,b,v,point))return -1;
-    for(i=0,o=j;i<book->dim;i++,o+=step)
-      a[o]+=v[i];
+  if(book->used_entries>0){
+    int step=n/book->dim;
+    ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
+    int i,j,o;
+    
+    for (j=0;j<step;j++){
+      if(decode_map(book,b,v,point))return -1;
+      for(i=0,o=j;i<book->dim;i++,o+=step)
+	a[o]+=v[i];
+    }
   }
   return 0;
 }
 
 long vorbis_book_decodev_add(codebook *book,ogg_int32_t *a,
 			     oggpack_buffer *b,int n,int point){
-  ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
-  int i,j;
-  
-  for(i=0;i<n;){
-    if(decode_map(book,b,v,point))return -1;
-    for (j=0;j<book->dim;j++)
-      a[i++]+=v[j];
+  if(book->used_entries>0){
+    ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
+    int i,j;
+    
+    for(i=0;i<n;){
+      if(decode_map(book,b,v,point))return -1;
+      for (j=0;j<book->dim;j++)
+	a[i++]+=v[j];
+    }
   }
-  
   return 0;
 }
 
 long vorbis_book_decodev_set(codebook *book,ogg_int32_t *a,
 			     oggpack_buffer *b,int n,int point){
-  ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
-  int i,j;
-
-  for(i=0;i<n;){
-    if(decode_map(book,b,v,point))return -1;
-    for (j=0;j<book->dim;j++)
-      a[i++]=v[j];
+  if(book->used_entries>0){
+    ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
+    int i,j;
+    
+    for(i=0;i<n;){
+      if(decode_map(book,b,v,point))return -1;
+      for (j=0;j<book->dim;j++)
+	a[i++]=v[j];
+    }
+  }else{
+    int i,j;
+    
+    for(i=0;i<n;){
+      for (j=0;j<book->dim;j++)
+	a[i++]=0;
+    }
   }
 
   return 0;
@@ -742,20 +769,21 @@ long vorbis_book_decodevv_add(codebook *book,ogg_int32_t **a,
 			      long offset,int ch,
 			      oggpack_buffer *b,int n,int point){
 
-  ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
-  long i,j;
-  int chptr=0;
+  if(book->used_entries>0){
+    ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
+    long i,j;
+    int chptr=0;
     
-  for(i=offset;i<offset+n;){
-    if(decode_map(book,b,v,point))return -1;
-    for (j=0;j<book->dim;j++){
-      a[chptr++][i]+=v[j];
-      if(chptr==ch){
-	chptr=0;
-	i++;
+    for(i=offset;i<offset+n;){
+      if(decode_map(book,b,v,point))return -1;
+      for (j=0;j<book->dim;j++){
+	a[chptr++][i]+=v[j];
+	if(chptr==ch){
+	  chptr=0;
+	  i++;
+	}
       }
     }
   }
-  
   return 0;
 }

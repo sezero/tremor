@@ -10,7 +10,7 @@
  *                                                                  *
  ********************************************************************/
 
-#define HEAD_ALIGN 32
+#define HEAD_ALIGN 64
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -187,6 +187,7 @@ void _VDBG_dump(void){
 }
 
 extern void *_VDBG_malloc(void *ptr,long bytes,char *file,long line){
+  if(bytes<0) abort();
   bytes+=HEAD_ALIGN;
   if(ptr){
     ptr-=HEAD_ALIGN;

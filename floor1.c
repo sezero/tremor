@@ -81,6 +81,8 @@ vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
     if(oggpack_eop(opb)<0) goto err_out;
     if(info->class[j].class_subs)
       info->class[j].class_book=oggpack_read(opb,8);
+    else
+      info->class[j].class_book=0;
     if(info->class[j].class_book>=ci->books)goto err_out;
     for(k=0;k<(1<<info->class[j].class_subs);k++){
       info->class[j].class_subbook[k]=oggpack_read(opb,8)-1;
