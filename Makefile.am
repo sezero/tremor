@@ -16,12 +16,16 @@ libvorbisidec_la_SOURCES = mdct.c block.c window.c \
 			asm_arm.h ivorbiscodec.h
 libvorbisidec_la_LDFLAGS = -version-info @V_LIB_CURRENT@:@V_LIB_REVISION@:@V_LIB_AGE@
 
-EXTRA_PROGRAMS = ivorbisfile_example
+EXTRA_PROGRAMS = ivorbisfile_example iseeking_example
 CLEANFILES = $(EXTRA_PROGRAMS) $(lib_LTLIBRARIES)
 
 ivorbisfile_example_SOURCES = ivorbisfile_example.c
 ivorbisfile_example_LDFLAGS = -static 
 ivorbisfile_example_LDADD = libvorbisidec.la
+
+iseeking_example_SOURCES = iseeking_example.c
+iseeking_example_LDFLAGS = -static 
+iseeking_example_LDADD = libvorbisidec.la
 
 includedir = $(prefix)/include/tremor
 
@@ -30,6 +34,7 @@ include_HEADERS = ivorbiscodec.h ivorbisfile.h ogg.h os_types.h config_types.h
 example:
 	-ln -fs . vorbis
 	$(MAKE) ivorbisfile_example
+	$(MAKE) iseeking_example
 
 debug:
 	$(MAKE) all CFLAGS="@DEBUG@" 
