@@ -2,6 +2,9 @@ AUTOMAKE_OPTIONS = foreign
 
 INCLUDES = -I./
 
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = vorbisidec.pc
+
 lib_LTLIBRARIES = libvorbisidec.la
 
 libvorbisidec_la_SOURCES = mdct.c dsp.c info.c misc.c \
@@ -25,6 +28,8 @@ ivorbisfile_example_LDADD = libvorbisidec.la
 includedir = $(prefix)/include/tremor
 
 include_HEADERS = ivorbiscodec.h ivorbisfile.h ogg.h os_types.h config_types.h
+
+EXTRA_DIST = vorbisidec.pc.in
 
 example:
 	-ln -fs . vorbis

@@ -110,4 +110,4 @@ AC_SUBST(LIBS)
 AC_SUBST(DEBUG)
 AC_SUBST(PROFILE)
 
-AC_OUTPUT(Makefile)
+AC_OUTPUT(Makefile vorbisidec.pc)
