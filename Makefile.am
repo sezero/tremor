@@ -35,7 +35,7 @@ includedir = $(prefix)/include/tremor
 include_HEADERS = ivorbiscodec.h ivorbisfile.h ogg.h os_types.h config_types.h
 
 EXTRA_DIST = vorbisidec.pc.in \
-        doc/*.html win32/VS*/libtremor/*.vcproj
+        $(srcdir)/doc/*.html $(srcdir)/win32/VS*/libtremor/*.vcproj
 
 example:
 	-ln -fs . vorbis
