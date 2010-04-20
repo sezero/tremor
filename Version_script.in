@@ -43,6 +43,9 @@
 		vorbis_comment_query;
 		vorbis_comment_query_count;
 		vorbis_comment_clear;
+		vorbis_block_init;
+		vorbis_block_clear;
+		vorbis_dsp_clear;
 
 	local:
 		*;
