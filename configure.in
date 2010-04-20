@@ -128,4 +128,4 @@ AC_SUBST(LIBS)
 AC_SUBST(DEBUG)
 AC_SUBST(PROFILE)
 
-AC_OUTPUT(Makefile Version_script)
+AC_OUTPUT(Makefile Version_script vorbisidec.pc)
