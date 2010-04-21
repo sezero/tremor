@@ -13,6 +13,9 @@ AM_CONFIG_HEADER([config.h])
 
 AM_INIT_AUTOMAKE(libvorbisidec,1.2.0)
 
+dnl AM_MAINTAINER_MODE only provides the option to configure to enable it
+AM_MAINTAINER_MODE
+
 dnl Library versioning
 
 V_LIB_CURRENT=1
