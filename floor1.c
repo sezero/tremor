@@ -195,6 +195,13 @@ static int render_point(int x0,int x1,int y0,int y1,int x){
   }
 }
 
+#ifdef _ARM_ASSEM_
+void render_line_arm(int n, ogg_int32_t *d,const ogg_int32_t *floor,
+                     int base, int err, int adx, int ady);
+void render_line_arm_low(int n, ogg_int32_t *d,const ogg_int32_t *floor,
+                         int base, int err, int adx, int ady);
+#endif
+
 static void render_line(int n,int x0,int x1,int y0,int y1,ogg_int32_t *d){
   int dy;
   int adx;
@@ -231,6 +238,13 @@ static void render_line(int n,int x0,int x1,int y0,int y1,ogg_int32_t *d){
     err = 0;
   }
 
+#ifdef _ARM_ASSEM_
+#ifdef _LOW_ACCURACY_
+  render_line_arm_low(n,d,floor,base,err,adx,ady);
+#else
+  render_line_arm(n,d,floor,base,err,adx,ady);
+#endif
+#else
   do{
     *d = MULT31_SHIFT15(*d,*floor);
     d++;
@@ -242,6 +256,7 @@ static void render_line(int n,int x0,int x1,int y0,int y1,ogg_int32_t *d){
     }
     n--;
   } while(n>0);
+#endif
 }
 
 int floor1_memosize(vorbis_info_floor *i){
