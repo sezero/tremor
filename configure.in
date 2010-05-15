@@ -37,6 +37,7 @@ AC_PROG_CPP
 CFLAGS="$cflags_save"
 
 AM_PROG_LIBTOOL
+AM_PROG_AS
 
 dnl --------------------------------------------------
 dnl Set build flags based on environment
@@ -44,11 +45,13 @@ dnl --------------------------------------------------
 
 dnl Set some target options
 
+arm_target=0
 cflags_save="$CFLAGS"
 ldflags_save="$LDFLAGS"
 if test -z "$GCC"; then
         case $host in 
         arm-*-*)
+		arm_target=1
                 DEBUG="-g -D_ARM_ASSEM_" 
                 CFLAGS="-O -D_ARM_ASSEM_"
                 PROFILE="-p -g -O -D_ARM_ASSEM" ;;
@@ -61,6 +64,7 @@ else
 
         case $host in 
         arm-*-*)
+		arm_target=1
                 DEBUG="-g -Wall -W -D__NO_MATH_INLINES -fsigned-char -D_ARM_ASSEM_"
                 CFLAGS="-O2 -Wall -D_ARM_ASSEM_ -fsigned-char"
                 PROFILE="-Wall -pg -g -O2 -D_ARM_ASSEM_ -fsigned-char -fno-inline-functions";;
@@ -74,6 +78,7 @@ fi
 CFLAGS="$CFLAGS $cflags_save -D_REENTRANT"
 LDFLAGS="$LDFLAGS $ldflags_save"
 
+AM_CONDITIONAL(ARM_TARGET, test x$arm_target = 1)
 
 # Test whenever ld supports -version-script
 AC_PROG_LD

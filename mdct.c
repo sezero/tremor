@@ -38,6 +38,43 @@
 #include "mdct.h"
 #include "mdct_lookup.h"
 
+#ifdef _ARM_ASSEM_
+
+/* We have 2 different variants of ARM routines, according to whether we
+ * are using _LOW_ACCURACY_ or not. We suffix the calling routines
+ * appropriately to call the right version. */
+/* FIXME: This could be avoided by people being smarter with configure. */
+#ifdef _LOW_ACCURACY_
+#define ARM_SUFFIX(A) A ## _arm_low
+#else
+#define ARM_SUFFIX(A) A ## _arm
+#endif
+
+extern ogg_int16_t *ARM_SUFFIX(mdct_unroll_prelap)(ogg_int16_t *out,
+                                                   DATA_TYPE   *post,
+                                                   DATA_TYPE   *l,
+                                                   int          step);
+extern ogg_int16_t *ARM_SUFFIX(mdct_unroll_part2)(ogg_int16_t *out,
+                                                  DATA_TYPE   *post,
+                                                  DATA_TYPE   *l,
+                                                  DATA_TYPE   *r,
+                                                  int          step,
+                                                  LOOKUP_T    *wL,
+                                                  LOOKUP_T    *wR);
+extern ogg_int16_t *ARM_SUFFIX(mdct_unroll_part3)(ogg_int16_t *out,
+                                                  DATA_TYPE   *post,
+                                                  DATA_TYPE   *l,
+                                                  DATA_TYPE   *r,
+                                                  int          step,
+                                                  LOOKUP_T    *wL,
+                                                  LOOKUP_T    *wR);
+extern ogg_int16_t *ARM_SUFFIX(mdct_unroll_postlap)(ogg_int16_t *out,
+                                                    DATA_TYPE   *post,
+                                                    DATA_TYPE   *l,
+                                                    int          step);
+#endif
+
+#ifndef _ARM_ASSEM_
 STIN void presymmetry(DATA_TYPE *in,int n2,int step){
   DATA_TYPE *aX;
   DATA_TYPE *bX;
@@ -289,14 +326,15 @@ STIN void mdct_step7(DATA_TYPE *x,int n,int step){
 	      w0    += 2;
   }while(w0<w1);
 }
+#endif
 
 STIN void mdct_step8(DATA_TYPE *x, int n, int step){
   LOOKUP_T *T;
   LOOKUP_T *V;
   DATA_TYPE *iX =x+(n>>1);
-  step>>=2;
 
   switch(step) {
+#ifndef _ARM_ASSEM_
   default: 
     T=(step>=4)?(sincos_lookup0+(step>>1)):sincos_lookup1;
     do{
@@ -306,6 +344,7 @@ STIN void mdct_step8(DATA_TYPE *x, int n, int step){
                    x  +=2;
     }while(x<iX);
     break;
+#endif
   
   case 1: 
     {
@@ -377,11 +416,16 @@ STIN void mdct_step8(DATA_TYPE *x, int n, int step){
   }
 }
 
+#ifdef _ARM_ASSEM_
+void ARM_SUFFIX(mdct_backward)(int n, DATA_TYPE *in);
+#endif
+
 /* partial; doesn't perform last-step deinterleave/unrolling.  That
    can be done more efficiently during pcm output */
 void mdct_backward(int n, DATA_TYPE *in){
-  int shift;
   int step;
+#ifndef _ARM_ASSEM_
+  int shift;
   
   for (shift=4;!(n&(1<<shift));shift++);
   shift=13-shift;
@@ -391,16 +435,25 @@ void mdct_backward(int n, DATA_TYPE *in){
   mdct_butterflies(in,n>>1,shift);
   mdct_bitreverse(in,n,shift);
   mdct_step7(in,n,step);
-  mdct_step8(in,n,step);
+  mdct_step8(in,n,step>>2);
+#else
+  step = ARM_SUFFIX(mdct_backward)(n, in);
+  if (step < 1)
+    mdct_step8(in,n,step);
+#endif
 }
 
-void mdct_shift_right(int n, DATA_TYPE *in, DATA_TYPE *right){
+void mdct_shift_right(int n, DATA_TYPE *in, DATA_TYPE *right) {
+#ifdef _ARM_ASSEM_
+  ARM_SUFFIX(mdct_shift_right)(n, in, right);
+#else
   int i;
   n>>=2;
   in+=1;
 
   for(i=0;i<n;i++)
     right[i]=in[i<<1];
+#endif
 }
 
 void mdct_unroll_lap(int n0,int n1,
@@ -433,10 +486,18 @@ void mdct_unroll_lap(int n0,int n1,
     r     -= off;
     start -= off;
     end   -= n;
+#ifndef _ARM_ASSEM_
     while(r>post){
       *out = CLIP_TO_15((*--r)>>9);
       out+=step;
     }
+#else
+    out = ARM_SUFFIX(mdct_unroll_prelap)(out,post,r,step);
+    n -= off;
+    if (n < 0)
+      n = 0;
+    r -= n;
+#endif
   }
   
   /* cross-lap; two halves due to wrap-around */
@@ -449,11 +510,22 @@ void mdct_unroll_lap(int n0,int n1,
   wR    -= off;
   wL    += off;
   end   -= n;
+#ifndef _ARM_ASSEM_
   while(r>post){
     l-=2;
     *out = CLIP_TO_15((MULT31(*--r,*--wR) + MULT31(*l,*wL++))>>9);
     out+=step;
   }
+#else
+  out = ARM_SUFFIX(mdct_unroll_part2)(out, post, l, r, step, wL, wR);
+  n -= off;
+  if (n < 0)
+      n = 0;
+  l -= 2*n;
+  r -= n;
+  wR -= n;
+  wL += n;
+#endif
 
   n      = (end<halfLap?end:halfLap);
   off    = (start<halfLap?start:halfLap);
@@ -464,11 +536,22 @@ void mdct_unroll_lap(int n0,int n1,
   end   -= n;
   wR    -= off;
   wL    += off;
+#ifndef _ARM_ASSEM_
   while(r<post){
     *out = CLIP_TO_15((MULT31(*r++,*--wR) - MULT31(*l,*wL++))>>9);
     out+=step;
     l+=2;
   }
+#else
+  out = ARM_SUFFIX(mdct_unroll_part3)(out, post, l, r, step, wL, wR);
+  n -= off;
+  if (n < 0)
+      n = 0;
+  l += 2*n;
+  r += n;
+  wR -= n;
+  wL += n;
+#endif
 
   /* preceeding direct-copy lapping from previous frame, if any */
   if(postLap){
@@ -476,11 +559,15 @@ void mdct_unroll_lap(int n0,int n1,
     off    = (start<postLap?start:postLap);
     post   = l+n*2;
     l     += off*2;
+#ifndef _ARM_ASSEM_
     while(l<post){
       *out = CLIP_TO_15((-*l)>>9);
       out+=step;
       l+=2;
     }
+#else
+    out = ARM_SUFFIX(mdct_unroll_postlap)(out,post,l,step);
+#endif
   }
 }
 

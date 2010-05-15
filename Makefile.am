@@ -7,6 +7,13 @@ pkgconfig_DATA = vorbisidec.pc
 
 lib_LTLIBRARIES = libvorbisidec.la
 
+if ARM_TARGET
+# Build 'em both and let God sort 'em out
+TARGET_SPECIFIC_SOURCES = mdctARM.s mdctLARM.s
+else
+TARGET_SPECIFIC_SOURCES =
+endif
+
 libvorbisidec_la_SOURCES = mdct.c dsp.c info.c misc.c \
                         floor1.c floor0.c vorbisfile.c \
                         res012.c mapping0.c codebook.c \
@@ -15,6 +22,7 @@ libvorbisidec_la_SOURCES = mdct.c dsp.c info.c misc.c \
                         os.h mdct.h ivorbisfile.h lsp_lookup.h\
                         window_lookup.h floor_lookup.c \
                         codec_internal.h ogg.h \
+			$(TARGET_SPECIFIC_SOURCES) \
 			asm_arm.h ivorbiscodec.h
 libvorbisidec_la_LDFLAGS = -version-info @V_LIB_CURRENT@:@V_LIB_REVISION@:@V_LIB_AGE@
 
