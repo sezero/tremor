@@ -21,27 +21,31 @@
 #include "ogg.h"
 
 typedef struct codebook{
-  long  dim;             /* codebook dimensions (elements per vector) */
-  long  entries;         /* codebook entries */
-  long  used_entries;    /* populated codebook entries */
-
-  int   dec_maxlength;
-  void *dec_table;
-  int   dec_nodeb;      
-  int   dec_leafw;      
-  int   dec_type;        /* 0 = entry number
+  /* Top 15 used in ARM code */
+  int          dec_maxlength;
+  void        *dec_table;
+  int          dec_method;
+  int          dec_type; /* 0 = entry number
 			    1 = packed vector of values
 			    2 = packed vector of column offsets, maptype 1 
 			    3 = scalar offset into value array,  maptype 2  */
+  int          q_bits;
+  long         dim;      /* codebook dimensions (elements per vector) */
+  int          q_delp;
+  int          q_minp;  
+  ogg_int32_t  q_del;
+  ogg_int32_t  q_min;  
+  int          q_seq;
+  int          q_pack;
+  void        *q_val;   
+  long         used_entries; /* populated codebook entries */
+  ogg_int32_t *dec_buf;
 
-  ogg_int32_t q_min;  
-  int         q_minp;  
-  ogg_int32_t q_del;
-  int         q_delp;
-  int         q_seq;
-  int         q_bits;
-  int         q_pack;
-  void       *q_val;   
+  /* C only */
+  int          dec_nodeb;      
+  int          dec_leafw;      
+
+  long         entries;      /* codebook entries */
 
 } codebook;
 

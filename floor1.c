@@ -64,7 +64,7 @@ static void mergesort(char *index,ogg_uint16_t *vals,ogg_uint16_t n){
       int k2=mid;
       int end=(j+i*2<n?j+i*2:n);
       while(k1<mid && k2<end){
-	if(vals[A[k1]]<vals[A[k2]])
+	if(vals[(int)A[k1]]<vals[(int)A[k2]])
 	  B[j++]=A[k1++];
 	else
 	  B[j++]=A[k2++];
@@ -94,7 +94,7 @@ vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
   info->partitionclass=
     (char *)_ogg_malloc(info->partitions*sizeof(*info->partitionclass));
   for(j=0;j<info->partitions;j++){
-    info->partitionclass[j]=oggpack_read(opb,4); /* only 0 to 15 legal */
+    info->partitionclass[j]=(char)oggpack_read(opb,4); /* only 0 to 15 legal */
     if(maxclass<info->partitionclass[j])maxclass=info->partitionclass[j];
   }
 
@@ -102,16 +102,16 @@ vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
   info->class=
     (floor1class *)_ogg_malloc((maxclass+1)*sizeof(*info->class));
   for(j=0;j<maxclass+1;j++){
-    info->class[j].class_dim=oggpack_read(opb,3)+1; /* 1 to 8 */
-    info->class[j].class_subs=oggpack_read(opb,2); /* 0,1,2,3 bits */
+    info->class[j].class_dim=(char)oggpack_read(opb,3)+1; /* 1 to 8 */
+    info->class[j].class_subs=(char)oggpack_read(opb,2); /* 0,1,2,3 bits */
     if(oggpack_eop(opb)<0) goto err_out;
     if(info->class[j].class_subs)
-      info->class[j].class_book=oggpack_read(opb,8);
+      info->class[j].class_book=(unsigned char)oggpack_read(opb,8);
     else
       info->class[j].class_book=0;
     if(info->class[j].class_book>=ci->books)goto err_out;
     for(k=0;k<(1<<info->class[j].class_subs);k++){
-      info->class[j].class_subbook[k]=oggpack_read(opb,8)-1;
+      info->class[j].class_subbook[k]=(unsigned char)oggpack_read(opb,8)-1;
       if(info->class[j].class_subbook[k]>=ci->books &&
 	 info->class[j].class_subbook[k]!=0xff)goto err_out;
     }
@@ -122,7 +122,7 @@ vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
   rangebits=oggpack_read(opb,4);
 
   for(j=0,k=0;j<info->partitions;j++)
-    count+=info->class[info->partitionclass[j]].class_dim; 
+    count+=info->class[(int)info->partitionclass[j]].class_dim; 
   info->postlist=
     (ogg_uint16_t *)_ogg_malloc((count+2)*sizeof(*info->postlist));
   info->forward_index=
@@ -134,9 +134,9 @@ vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
 
   count=0;
   for(j=0,k=0;j<info->partitions;j++){
-    count+=info->class[info->partitionclass[j]].class_dim; 
+    count+=info->class[(int)info->partitionclass[j]].class_dim; 
     for(;k<count;k++){
-      int t=info->postlist[k+2]=oggpack_read(opb,rangebits);
+      int t=info->postlist[k+2]=(ogg_uint16_t)oggpack_read(opb,rangebits);
       if(t>=(1<<rangebits))goto err_out;
     }
   }
@@ -196,31 +196,52 @@ static int render_point(int x0,int x1,int y0,int y1,int x){
 }
 
 static void render_line(int n,int x0,int x1,int y0,int y1,ogg_int32_t *d){
-  int dy=y1-y0;
-  int adx=x1-x0;
-  int ady=abs(dy);
-  int base=dy/adx;
-  int sy=(dy<0?base-1:base+1);
-  int x=x0;
-  int y=y0;
-  int err=0;
+  int dy;
+  int adx;
+  int ady;
+  int base;
+  int err;
+  const ogg_int32_t *floor;
 
   if(n>x1)n=x1;
+  n -= x0;
+  if (n <= 0)
+    return;
+  dy=y1-y0;
+  adx=x1-x0;
+  ady=abs(dy);
+  base=dy/adx;
+  err=adx-1;
+  floor=&FLOOR_fromdB_LOOKUP[y0];
+  d += x0;
   ady-=abs(base*adx);
 
-  if(x<n)
-    d[x]= MULT31_SHIFT15(d[x],FLOOR_fromdB_LOOKUP[y]);
-
-  while(++x<n){
-    err=err+ady;
-    if(err>=adx){
-      err-=adx;
-      y+=sy;
-    }else{
-      y+=base;
-    }
-    d[x]= MULT31_SHIFT15(d[x],FLOOR_fromdB_LOOKUP[y]);
+  /* We should add base each time, and then:
+   *   if dy >=0 we occasionally add 1
+  *   else         occasionally subtract 1.
+   * As an optimisation we say that if dy <0 we make base 1 smaller.
+   * Then we need to add 1 occassionally, rather than subtract 1 - but we
+   * need to add 1 in all the cases when we wouldn't have done so before.
+   * Previously we'd have added 1 (100*ady/adx)% of the time. Now we want
+   * to do so (100*(adx-ady)/adx)% of the time.
+   */
+  if (dy < 0){
+    base--;
+    ady = adx-ady;
+    err = 0;
   }
+
+  do{
+    *d = MULT31_SHIFT15(*d,*floor);
+    d++;
+    floor+=base;
+    err-=ady;
+    if(err<0){
+      err+=adx;
+      floor+=1;
+    }
+    n--;
+  } while(n>0);
 }
 
 int floor1_memosize(vorbis_info_floor *i){
@@ -275,10 +296,10 @@ ogg_int32_t *floor1_inverse1(vorbis_dsp_state *vd,vorbis_info_floor *in,
 
     /* unwrap positive values and reconsitute via linear interpolation */
     for(i=2;i<info->posts;i++){
-      int predicted=render_point(info->postlist[info->loneighbor[i-2]],
-				 info->postlist[info->hineighbor[i-2]],
-				 fit_value[info->loneighbor[i-2]],
-				 fit_value[info->hineighbor[i-2]],
+      int predicted=render_point(info->postlist[(int)info->loneighbor[i-2]],
+				 info->postlist[(int)info->hineighbor[i-2]],
+				 fit_value[(int)info->loneighbor[i-2]],
+				 fit_value[(int)info->hineighbor[i-2]],
 				 info->postlist[i]);
       int hiroom=quant_q-predicted;
       int loroom=predicted;
@@ -301,8 +322,8 @@ ogg_int32_t *floor1_inverse1(vorbis_dsp_state *vd,vorbis_info_floor *in,
 	}
 
 	fit_value[i]=val+predicted;
-	fit_value[info->loneighbor[i-2]]&=0x7fff;
-	fit_value[info->hineighbor[i-2]]&=0x7fff;
+	fit_value[(int)info->loneighbor[i-2]]&=0x7fff;
+	fit_value[(int)info->hineighbor[i-2]]&=0x7fff;
 
       }else{
 	fit_value[i]=predicted|0x8000;

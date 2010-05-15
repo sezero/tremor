@@ -64,8 +64,8 @@ int mapping_info_unpack(vorbis_info_mapping *info,vorbis_info *vi,
       _ogg_malloc(info->coupling_steps*sizeof(*info->coupling));
     
     for(i=0;i<info->coupling_steps;i++){
-      int testM=info->coupling[i].mag=oggpack_read(opb,ilog(vi->channels));
-      int testA=info->coupling[i].ang=oggpack_read(opb,ilog(vi->channels));
+      int testM=info->coupling[i].mag=(unsigned char)oggpack_read(opb,ilog(vi->channels));
+      int testA=info->coupling[i].ang=(unsigned char)oggpack_read(opb,ilog(vi->channels));
 
       if(testM<0 || 
 	 testA<0 || 
@@ -80,18 +80,20 @@ int mapping_info_unpack(vorbis_info_mapping *info,vorbis_info *vi,
     
   if(info->submaps>1){
     info->chmuxlist=_ogg_malloc(sizeof(*info->chmuxlist)*vi->channels);
+    if (!info->chmuxlist) goto err_out;
     for(i=0;i<vi->channels;i++){
-      info->chmuxlist[i]=oggpack_read(opb,4);
+      info->chmuxlist[i]=(unsigned char)oggpack_read(opb,4);
       if(info->chmuxlist[i]>=info->submaps)goto err_out;
     }
   }
 
   info->submaplist=_ogg_malloc(sizeof(*info->submaplist)*info->submaps);
+  if(!info->submaplist) goto err_out;
   for(i=0;i<info->submaps;i++){
     int temp=oggpack_read(opb,8);
-    info->submaplist[i].floor=oggpack_read(opb,8);
+    info->submaplist[i].floor=(char)oggpack_read(opb,8);
     if(info->submaplist[i].floor>=ci->floors)goto err_out;
-    info->submaplist[i].residue=oggpack_read(opb,8);
+    info->submaplist[i].residue=(char)oggpack_read(opb,8);
     if(info->submaplist[i].residue>=ci->residues)goto err_out;
   }
 

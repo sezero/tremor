@@ -136,7 +136,7 @@ void vorbis_lsp_to_curve(ogg_int32_t *curve,int n,int ln,
   int ampi=amp;
   ogg_int32_t *ilsp=(ogg_int32_t *)alloca(m*sizeof(*ilsp));
 
-  ogg_uint32_t inyq= (1UL<<31) / toBARK(nyq);
+  /* ogg_uint32_t inyq= (1UL<<31) / toBARK(nyq); */
   ogg_uint32_t imap= (1UL<<31) / ln;
   ogg_uint32_t tBnyq1 = toBARK(nyq)<<1;
 
@@ -360,7 +360,7 @@ vorbis_info_floor *floor0_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
   if(info->barkmap<1)goto err_out;
     
   for(j=0;j<info->numbooks;j++){
-    info->books[j]=oggpack_read(opb,8);
+    info->books[j]=(char)(oggpack_read(opb,8));
     if(info->books[j]>=ci->books)goto err_out;
   }
 
