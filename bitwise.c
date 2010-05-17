@@ -23,6 +23,7 @@
 #include "misc.h"
 #include "ogg.h"
 
+#ifndef _ARM_ASSEM_
 static unsigned long mask[]=
 {0x00000000,0x00000001,0x00000003,0x00000007,0x0000000f,
  0x0000001f,0x0000003f,0x0000007f,0x000000ff,0x000001ff,
@@ -146,18 +147,21 @@ void oggpack_adv(oggpack_buffer *b,int bits){
   b->headptr+=(bits>>3);
   if(b->headend<1)_span(b);
 }
+#endif
 
 int oggpack_eop(oggpack_buffer *b){
   if(b->headend<0)return -1;
   return 0;
 }
 
+#ifdef _ARM_ASSEM_
 /* bits <= 32 */
 long oggpack_read(oggpack_buffer *b,int bits){
   long ret=oggpack_look(b,bits);
   oggpack_adv(b,bits);
   return(ret);
 }
+#endif
 
 long oggpack_bytes(oggpack_buffer *b){
   if(b->headend<0)return b->count+b->head->length;

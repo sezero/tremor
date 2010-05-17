@@ -50,10 +50,15 @@ typedef struct ogg_reference {
 } ogg_reference;
 
 typedef struct oggpack_buffer {
+#ifdef _ARM_ASSEM_
+  int            bitsLeftInSegment;
+  ogg_uint32_t  *ptr;
+  long           bitsLeftInWord;
+#else
   int            headbit;
   unsigned char *headptr;
   long           headend;
-
+#endif
   /* memory management */
   ogg_reference *head;
   ogg_reference *tail;

@@ -10,7 +10,8 @@ lib_LTLIBRARIES = libvorbisidec.la
 if ARM_TARGET
 # Build both low and full accuracy versions and the linker will only
 # include the appropriate versions.
-TARGET_SPECIFIC_SOURCES = mdctARM.s mdctLARM.s floor1ARM.s floor1LARM.s
+TARGET_SPECIFIC_SOURCES = mdctARM.s mdctLARM.s floor1ARM.s floor1LARM.s \
+			bitwiseARM.s
 else
 TARGET_SPECIFIC_SOURCES =
 endif
