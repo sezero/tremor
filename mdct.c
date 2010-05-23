@@ -417,7 +417,7 @@ STIN void mdct_step8(DATA_TYPE *x, int n, int step){
 }
 
 #ifdef _ARM_ASSEM_
-void ARM_SUFFIX(mdct_backward)(int n, DATA_TYPE *in);
+int ARM_SUFFIX(mdct_backward)(int n, DATA_TYPE *in);
 #endif
 
 /* partial; doesn't perform last-step deinterleave/unrolling.  That

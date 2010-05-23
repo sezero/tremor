@@ -23,7 +23,7 @@
 #include "misc.h"
 #include "ogg.h"
 
-#ifndef _ARM_ASSEM_
+#if !defined(_ARM_ASSEM_) || defined(_V_BIT_TEST)
 static unsigned long mask[]=
 {0x00000000,0x00000001,0x00000003,0x00000007,0x0000000f,
  0x0000001f,0x0000003f,0x0000007f,0x000000ff,0x000001ff,
@@ -32,11 +32,14 @@ static unsigned long mask[]=
  0x000fffff,0x001fffff,0x003fffff,0x007fffff,0x00ffffff,
  0x01ffffff,0x03ffffff,0x07ffffff,0x0fffffff,0x1fffffff,
  0x3fffffff,0x7fffffff,0xffffffff };
+#endif
 
+#ifndef _ARM_ASSEM_
 /* spans forward, skipping as many bytes as headend is negative; if
    headend is zero, simply finds next byte.  If we're up to the end
    of the buffer, leaves headend at zero.  If we've read past the end,
    halt the decode process. */
+
 
 static void _span(oggpack_buffer *b){
   while(b->headend-(b->headbit>>3)<1){
@@ -147,21 +150,11 @@ void oggpack_adv(oggpack_buffer *b,int bits){
   b->headptr+=(bits>>3);
   if(b->headend<1)_span(b);
 }
-#endif
 
 int oggpack_eop(oggpack_buffer *b){
   if(b->headend<0)return -1;
   return 0;
 }
-
-#ifdef _ARM_ASSEM_
-/* bits <= 32 */
-long oggpack_read(oggpack_buffer *b,int bits){
-  long ret=oggpack_look(b,bits);
-  oggpack_adv(b,bits);
-  return(ret);
-}
-#endif
 
 long oggpack_bytes(oggpack_buffer *b){
   if(b->headend<0)return b->count+b->head->length;
@@ -174,6 +167,34 @@ long oggpack_bits(oggpack_buffer *b){
   return (b->count + b->head->length-b->headend)*8 + 
     b->headbit;
 }
+
+/* bits <= 32 */
+long oggpack_read(oggpack_buffer *b,int bits){
+  long ret=oggpack_look(b,bits);
+  oggpack_adv(b,bits);
+  return(ret);
+}
+
+#else
+
+int oggpack_eop(oggpack_buffer *b){
+  if(b->bitsLeftInSegment<0)return -1;
+  return 0;
+}
+
+long oggpack_bytes(oggpack_buffer *b){
+  if(b->bitsLeftInSegment<0)return b->count+b->head->length;
+  return b->count + b->head->length -
+    (b->bitsLeftInSegment)/8;
+}
+
+long oggpack_bits(oggpack_buffer *b){
+  if(b->bitsLeftInSegment<0)return (b->count+b->head->length)*8;
+  return (b->count + b->head->length)*8 - 
+    b->bitsLeftInSegment;
+}
+
+#endif
 
 /* Self test of the bitwise routines; everything else is based on
    them, so they damned well better be solid. */
@@ -295,14 +316,22 @@ void _end_verify2(int count){
   
   /* does reading to exactly byte alignment *not* trip EOF? */
   oggpack_adv(&o,leftover);
+#ifdef _ARM_ASSEM_
+  if(o.bitsLeftInSegment!=0)
+#else
   if(o.headend!=0)
+#endif
     report("\nERROR: read to but not past exact end tripped EOF.\n");
   if(oggpack_bits(&o)!=count*8)
     report("\nERROR: read to but not past exact end reported bad bitcount.\n");
   
   /* does EOF trip properly after a single additional bit? */
   oggpack_adv(&o,1);
+#ifdef _ARM_ASSEM_
+  if(o.bitsLeftInSegment>=0)
+#else
   if(o.headend>=0)
+#endif
     report("\nERROR: read past exact end did not trip EOF.\n");
   if(oggpack_bits(&o)!=count*8)
     report("\nERROR: read past exact end reported bad bitcount.\n");
@@ -310,7 +339,11 @@ void _end_verify2(int count){
   /* does EOF stay set over additional bit reads? */
   for(i=0;i<=32;i++){
     oggpack_adv(&o,i);
+#ifdef _ARM_ASSEM_
+    if(o.bitsLeftInSegment>=0)
+#else
     if(o.headend>=0)
+#endif
       report("\nERROR: EOF did not stay set on stream.\n");
     if(oggpack_bits(&o)!=count*8)
       report("\nERROR: read past exact end reported bad bitcount.\n");
