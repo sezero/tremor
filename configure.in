@@ -6,7 +6,7 @@ dnl ------------------------------------------------
 
 AC_INIT(mdct.c)
 
-AC_CANONICAL_HOST
+AC_CANONICAL_SYSTEM
 AC_CANONICAL_TARGET
 
 AM_CONFIG_HEADER([config.h])
