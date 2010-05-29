@@ -219,13 +219,16 @@ static int _make_decode_table(codebook *s,char *lengthlist,long quantvals,
   if (s->used_entries > INT_MAX/2 ||
       s->used_entries*2 > INT_MAX/((long) sizeof(*work)) - 1) return 1;
   /* Overallocate as above */
-  work=alloca((s->entries*2+1)*sizeof(*work));
-  if(_make_words(lengthlist,s->entries,work,quantvals,s,opb,maptype))return 1;
-  if (s->used_entries > INT_MAX/(s->dec_leafw+1)) return 1;
-  if (s->dec_nodeb && s->used_entries * (s->dec_leafw+1) > INT_MAX/s->dec_nodeb) return 1;
+  /* With test_genesis.ogg, entries=6561, used_entries=81. Overallocating using
+   * alloca breaks the stack on WinCE, so use malloc instead. */
+  work=_ogg_malloc((s->entries*2+1)*sizeof(*work));
+  if (!work) return 1;
+  if(_make_words(lengthlist,s->entries,work,quantvals,s,opb,maptype)) goto fail_post_alloc;
+  if (s->used_entries > INT_MAX/(s->dec_leafw+1)) goto fail_post_alloc;
+  if (s->dec_nodeb && s->used_entries * (s->dec_leafw+1) > INT_MAX/s->dec_nodeb) goto fail_post_alloc;
   s->dec_table=_ogg_malloc((s->used_entries*(s->dec_leafw+1)-2)*
 			   s->dec_nodeb);
-  if (!s->dec_table) return 1;
+  if (!s->dec_table) goto fail_post_alloc;
   
   if(s->dec_leafw==1){
     switch(s->dec_nodeb){
@@ -310,6 +313,9 @@ static int _make_decode_table(codebook *s,char *lengthlist,long quantvals,
   }
 	
   return 0;
+fail_post_alloc:
+  _ogg_free(work);
+  return 1;
 }
 
 /* most of the time, entries%dimensions == 0, but we need to be
@@ -473,9 +479,10 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
     {
       /* packed values */
       long total1=(s->q_bits*s->dim+8)/8; /* remember flag bit */
+      long total2;
       if (s->dim > (INT_MAX-8)/s->q_bits) goto _eofout;
       /* vector of column offsets; remember flag bit */
-      long total2=(_ilog(quantvals-1)*s->dim+8)/8+(s->q_bits+7)/8;
+      total2=(_ilog(quantvals-1)*s->dim+8)/8+(s->q_bits+7)/8;
 
       
       if(total1<=4 && total1<=total2){
