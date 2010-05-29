@@ -1,0 +1,188 @@
+# Tremolo Makefile
+#
+# This is a temporary makefile used to test this branch until the merge
+# completes. It doesn't use the config system etc, so should be considered
+# a poor relation to doing it properly.
+#
+# Use:
+#
+#   make -f Makefile.rjw
+#
+# $URL$
+# $Id$
+
+srcdir    = .
+VPATH     = $(srcdir)
+
+CC     = arm-none-linux-gnueabi-gcc
+CXX    = arm-none-linux-gnueabi-g++
+LD     = arm-none-linux-gnueabi-g++
+AR     = arm-none-linux-gnueabi-ar cru
+RANLIB = arm-none-linux-gnueabi-ranlib
+STRIP  = arm-none-linux-gnueabi-strip
+WINDRES= arm-none-linux-gnueabi-windres
+MKDIR  = mkdir -p
+RM     = rm -f
+RM_REC = rm -rf
+ECHO   = echo -n
+CAT    = cat
+AS     = arm-none-linux-gnueabi-as
+
+DEFINES := 
+
+CFLAGS := -g -mcpu=cortex-a8 -mfpu=neon -I$(srcdir) -D__ARM__ -D_ARM_
+
+CXXFLAGS := $(CFLAGS)
+
+LDFLAGS :=
+LIBS :=
+
+OBJS := 
+MODULE_DIRS += .
+
+LIBOBJS := \
+	build/bitwise.o \
+	build/bitwiseARM.o \
+	build/codebook.o \
+	build/dsp.o \
+	build/floor0.o \
+	build/floor1.o \
+	build/floor1ARM.o \
+	build/floor_lookup.o \
+	build/framing.o \
+	build/info.o \
+	build/mapping0.o \
+	build/mdct.o \
+	build/mdctARM.o \
+	build/misc.o \
+	build/res012.o \
+	build/vorbisfile.o
+EXEOBJS := build/testtremor.o
+
+LIBOBJS_C := \
+	  build/bitwise.oc \
+	  build/codebook.oc \
+	  build/dsp.oc \
+	  build/floor0.oc \
+	  build/floor1.oc \
+	  build/floor_lookup.oc \
+	  build/framing.oc \
+	  build/info.oc \
+	  build/mapping0.oc \
+	  build/mdct.oc \
+	  build/misc.oc \
+	  build/res012.oc \
+	  build/vorbisfile.oc
+EXEOBJS_C := build/testtremor.oc
+
+LIBOBJS_L := \
+	  build/bitwise.ol \
+	  build/bitwiseARM.o \
+	  build/codebook.ol \
+	  build/dsp.ol \
+	  build/floor0.ol \
+	  build/floor1.ol \
+	  build/floor1LARM.o \
+	  build/floor_lookup.ol \
+	  build/framing.ol \
+	  build/info.ol \
+	  build/mapping0.ol \
+	  build/mdct.ol \
+	  build/mdctLARM.o \
+	  build/misc.ol \
+	  build/res012.ol \
+	  build/vorbisfile.ol
+EXEOBJS_L := build/testtremor.ol
+
+LIBOBJS_LC := \
+	   build/bitwise.olc \
+	   build/codebook.olc \
+	   build/dsp.olc \
+	   build/floor0.olc \
+	   build/floor1.olc \
+	   build/floor_lookup.olc \
+	   build/framing.olc \
+	   build/info.olc \
+	   build/mapping0.olc \
+	   build/mdct.olc \
+	   build/misc.olc \
+	   build/res012.olc \
+	   build/vorbisfile.olc
+EXEOBJS_LC := build/testtremor.olc
+
+# Rules
+.SUFFIXES: .o .oc .ol .olc
+
+# Compilation rule
+build/%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@ -D_ARM_ASSEM_
+
+build/%.oc: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+build/%.ol: %.c
+	$(CC) $(CFLAGS) -c $< -o $@ -D_LOW_ACCURACY_ -D_ARM_ASSEM_
+
+build/%.olc: %.c
+	$(CC) $(CFLAGS) -c $< -o $@ -D_LOW_ACCURACY_
+
+# Assembly rule
+build/%.o: %.s
+	./arm2gnu.pl < $< > build/$*.S
+	$(CC) -Ibuild $(CFLAGS) -c build/$*.S -o $@
+	$(STRIP) -x $@
+
+all: libTremolo.lib libTremoloC.lib libTremoloL.lib libTremoloLC.lib \
+     testtremor.exe testtremorC.exe testtremorL.exe testtremorLC.exe
+
+libTremolo.lib: $(LIBOBJS)
+	$(AR) $@ $^
+	$(RANLIB) $@
+
+libTremoloC.lib: $(LIBOBJS_C)
+	$(AR) $@ $^
+	$(RANLIB) $@
+
+libTremoloL.lib: $(LIBOBJS_L)
+	$(AR) $@ $^
+	$(RANLIB) $@
+
+libTremoloLC.lib: $(LIBOBJS_LC)
+	$(AR) $@ $^
+	$(RANLIB) $@
+
+#bitwiseTEST.o: bitwise.c
+#	$(CC) $(CFLAGS) -c -o bitwiseTEST.o bitwise.c -D_V_BIT_TEST
+
+#bittest.exe: bitwiseTEST.o bitwiseARM.o
+#	$(LD) $^ $(LDFLAGS) $(LIBS) -o $@ -Wl,-Map,bittest.exe.map
+
+testtremor.exe: $(EXEOBJS) $(LIBOBJS)
+	$(LD) $^ $(LDFLAGS) $(LIBS) -o $@ -Wl,-Map,testtremor.exe.map
+
+testtremorC.exe: $(EXEOBJS_C) $(LIBOBJS_C)
+	$(LD) $^ $(LDFLAGS) $(LIBS) -o $@ -Wl,-Map,testtremorC.exe.map
+
+testtremorL.exe: $(EXEOBJS_L) $(LIBOBJS_L)
+	$(LD) $^ $(LDFLAGS) $(LIBS) -o $@ -Wl,-Map,testtremorL.exe.map
+
+testtremorLC.exe: $(EXEOBJS_LC) $(LIBOBJS_LC)
+	$(LD) $^ $(LDFLAGS) $(LIBS) -o $@ -Wl,-Map,testtremorLC.exe.map
+
+annotate.exe: annotate.c
+	gcc $^ -o $@
+
+clean:
+	@-rm build/* >& /dev/null
+	@-rm libTremolo.lib >& /dev/null
+	@-rm libTremoloC.lib >& /dev/null
+	@-rm libTremoloL.lib >& /dev/null
+	@-rm libTremoloLC.lib >& /dev/null
+	@-rm testtremor.exe >& /dev/null
+	@-rm testtremorC.exe >& /dev/null
+	@-rm testtremorL.exe >& /dev/null
+	@-rm testtremorLC.exe >& /dev/null
+	@-rm testtremor.exe.map >& /dev/null
+	@-rm testtremorC.exe.map >& /dev/null
+	@-rm testtremorL.exe.map >& /dev/null
+	@-rm testtremorLC.exe.map >& /dev/null
