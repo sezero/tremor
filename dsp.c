@@ -87,8 +87,6 @@ void vorbis_dsp_clear(vorbis_dsp_state *v){
         if(v->mdctright[i])_ogg_free(v->mdctright[i]);
       _ogg_free(v->mdctright);
     }
-
-    _ogg_free(v);
   }
 }
 
