@@ -30,7 +30,7 @@ AS     = arm-none-linux-gnueabi-as
 
 DEFINES := 
 
-CFLAGS := -g -mcpu=cortex-a8 -mfpu=neon -I$(srcdir) -D__ARM__ -D_ARM_
+CFLAGS := -O3 -mcpu=cortex-a8 -mfpu=neon -I$(srcdir) -D__ARM__ -D_ARM_
 
 CXXFLAGS := $(CFLAGS)
 
@@ -44,6 +44,7 @@ LIBOBJS := \
 	build/bitwise.o \
 	build/bitwiseARM.o \
 	build/codebook.o \
+	build/dpenARM.o \
 	build/dsp.o \
 	build/floor0.o \
 	build/floor1.o \
@@ -79,6 +80,7 @@ LIBOBJS_L := \
 	  build/bitwise.ol \
 	  build/bitwiseARM.o \
 	  build/codebook.ol \
+	  build/dpenARM.o \
 	  build/dsp.ol \
 	  build/floor0.ol \
 	  build/floor1.ol \

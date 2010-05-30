@@ -43,10 +43,9 @@ int vorbis_dsp_restart(vorbis_dsp_state *v){
   return 0;
 }
 
-vorbis_dsp_state *vorbis_dsp_create(vorbis_info *vi){
+int vorbis_dsp_init(vorbis_dsp_state *v,vorbis_info *vi){
   int i;
 
-  vorbis_dsp_state *v=_ogg_calloc(1,sizeof(*v));
   codec_setup_info *ci=(codec_setup_info *)vi->codec_setup;
 
   v->vi=vi;
@@ -64,10 +63,16 @@ vorbis_dsp_state *vorbis_dsp_create(vorbis_info *vi){
   v->W=0;  /* current window size */
 
   vorbis_dsp_restart(v);
+  return 0;
+}
+
+vorbis_dsp_state *vorbis_dsp_create(vorbis_info *vi){
+  vorbis_dsp_state *v=_ogg_calloc(1,sizeof(*v));
+  vorbis_dsp_init(v,vi);
   return v;
 }
 
-void vorbis_dsp_destroy(vorbis_dsp_state *v){
+void vorbis_dsp_clear(vorbis_dsp_state *v){
   int i;
   if(v){
     vorbis_info *vi=v->vi;
@@ -85,6 +90,11 @@ void vorbis_dsp_destroy(vorbis_dsp_state *v){
 
     _ogg_free(v);
   }
+}
+
+void vorbis_dsp_destroy(vorbis_dsp_state *v){
+  vorbis_dsp_clear(v);
+  _ogg_free(v);
 }
 
 static LOOKUP_T *_vorbis_window(int left){
