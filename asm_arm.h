@@ -15,7 +15,7 @@
 
  ********************************************************************/
 
-#ifdef _ARM_ASSEM_
+#if defined(_ARM_ASSEM_) && !defined (WINCE)
 
 #if !defined(_V_WIDE_MATH) && !defined(_LOW_ACCURACY_)
 #define _V_WIDE_MATH

@@ -738,15 +738,18 @@ int decode_map(codebook *s, oggpack_buffer *b, ogg_int32_t *v, int point){
     break;
   }
   case 3:{
-    /* offset into array */
-    void *ptr=s->q_val+entry*s->q_pack;
-
     if(s->q_bits<=8){
-      for(i=0;i<s->dim;i++)
-	v[i]=((unsigned char *)ptr)[i];
+        for(i=0;i<s->dim;i++) {
+          /* offset into array */
+          unsigned char *ptr=(unsigned char *)s->q_val+entry*s->q_pack;
+          v[i]=ptr[i];
+        }
     }else{
-      for(i=0;i<s->dim;i++)
-	v[i]=((ogg_uint16_t *)ptr)[i];
+        for(i=0;i<s->dim;i++) {
+            /* offset into array */
+            ogg_uint16_t *ptr=(ogg_uint16_t *)s->q_val+entry*s->q_pack;
+            v[i]=ptr[i];
+        }
     }
     break;
   }

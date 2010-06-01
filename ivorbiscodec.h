@@ -64,6 +64,26 @@ typedef struct vorbis_comment{
 
 } vorbis_comment;
 
+/* vorbis_dsp_state buffers the current vorbis audio
+   analysis/synthesis state.  The DSP state belongs to a specific
+   logical bitstream ****************************************************/
+struct vorbis_dsp_state{
+  vorbis_info    *vi;
+  oggpack_buffer  opb;
+
+  ogg_int32_t   **work;
+  ogg_int32_t   **mdctright;
+  int             out_begin;
+  int             out_end;
+
+  long lW;
+  long W;
+
+  ogg_int64_t granulepos;
+  ogg_int64_t sequence;
+  ogg_int64_t sample_count;
+
+};
 
 /* Vorbis PRIMITIVES: general ***************************************/
 
@@ -77,6 +97,22 @@ extern void     vorbis_comment_add_tag(vorbis_comment *vc,
 extern char    *vorbis_comment_query(vorbis_comment *vc, char *tag, int count);
 extern int      vorbis_comment_query_count(vorbis_comment *vc, char *tag);
 extern void     vorbis_comment_clear(vorbis_comment *vc);
+
+
+/* Vorbis PRIMITIVES: synthesis layer *******************************/
+
+extern vorbis_dsp_state *vorbis_dsp_create(vorbis_info *vi);
+extern void     vorbis_dsp_destroy(vorbis_dsp_state *v);
+extern int      vorbis_dsp_headerin(vorbis_info *vi,vorbis_comment *vc,
+                                    ogg_packet *op);
+
+extern int      vorbis_dsp_restart(vorbis_dsp_state *v);
+extern int      vorbis_dsp_synthesis(vorbis_dsp_state *vd,
+                                     ogg_packet *op,int decodep);
+extern int      vorbis_dsp_pcmout(vorbis_dsp_state *v,
+                                  ogg_int16_t *pcm,int samples);
+extern int      vorbis_dsp_read(vorbis_dsp_state *v,int samples);
+extern long     vorbis_packet_blocksize(vorbis_info *vi,ogg_packet *op);
 
 /* Vorbis ERRORS and return codes ***********************************/
 
