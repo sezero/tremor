@@ -988,11 +988,13 @@ int ogg_stream_pagein(ogg_stream_state *os, ogg_page *og){
   }
 
   /* add to fifos */
-  if(!os->body_tail){
-    os->body_tail=og->body;
-    os->body_head=ogg_buffer_walk(og->body);
-  }else{
-    os->body_head=ogg_buffer_cat(os->body_head,og->body);
+  if(og->body){
+    if(!os->body_tail){
+      os->body_tail=og->body;
+      os->body_head=ogg_buffer_walk(og->body);
+    }else{
+      os->body_head=ogg_buffer_cat(os->body_head,og->body);
+    }
   }
   if(!os->header_tail){
     os->header_tail=og->header;
