@@ -438,7 +438,7 @@ void mdct_backward(int n, DATA_TYPE *in){
   mdct_step8(in,n,step>>2);
 #else
   step = ARM_SUFFIX(mdct_backward)(n, in);
-  if (step < 1)
+  if (step <= 1)
     mdct_step8(in,n,step);
 #endif
 }
@@ -570,4 +570,3 @@ void mdct_unroll_lap(int n0,int n1,
 #endif
   }
 }
-
