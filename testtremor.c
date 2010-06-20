@@ -28,6 +28,8 @@
 
 //#define PROFILE
 
+#define WAV_FORMAT
+
 #ifdef _WIN32 /* We need the following two to set stdin/stdout to binary */
 #include <io.h>
 #include <fcntl.h>
@@ -298,6 +300,24 @@ int main(int argc, char *argv[]){
       Output("Failed to open '%s' for output\n", argv[2]);
       exit(EXIT_FAILURE);
     }
+#ifdef WAV_FORMAT
+    { unsigned int rate = 44100, channels=2, bps=16, drate, dblock;
+      fprintf(out, "RIFF%c%c%c%c",0,0,0,0); /* RIFF, chunksize */
+      fprintf(out, "WAVEfmt %c%c%c%c",16,0,0,0); /* WAVEfmt, chunksize */;
+      fprintf(out, "%c%c%c%c", 1,0, channels,0); /* fmt(PCM), channels) */
+      fprintf(out, "%c%c%c%c", /* Sampling rate (blocks per second) */
+              rate,rate>>8,rate>>16,rate>>24);
+      drate = (bps>>3)*channels*rate;
+      fprintf(out, "%c%c%c%c", /* data rate */
+              drate,drate>>8,drate>>16,drate>>24);
+      dblock = (bps>>3)*channels;
+      fprintf(out, "%c%c", /* data block size(bytes) */
+              dblock,dblock>>8);
+      fprintf(out, "%c%c", /* bps */
+              bps,bps>>8);
+      fprintf(out, "data%c%c%c%c",0,0,0,0); /* sample header */
+    }
+#endif
   }
 
   if (argc >= 4)
@@ -312,6 +332,24 @@ int main(int argc, char *argv[]){
         Output("Failed to open '%s' as output reference file\n", argv[3]);
         exit(EXIT_FAILURE);
       }
+#ifdef WAV_FORMAT
+    { unsigned int rate = 44100, channels=2, bps=16, drate, dblock;
+      fprintf(out, "RIFF%c%c%c%c",0,0,0,0); /* RIFF, chunksize */
+      fprintf(out, "WAVEfmt %c%c%c%c",16,0,0,0); /* WAVEfmt, chunksize */;
+      fprintf(out, "%c%c%c%c", 1,0, channels,0); /* fmt(PCM), channels) */
+      fprintf(out, "%c%c%c%c", /* Sampling rate (blocks per second) */
+              rate,rate>>8,rate>>16,rate>>24);
+      drate = (bps>>3)*channels*rate;
+      fprintf(out, "%c%c%c%c", /* data rate */
+              drate,drate>>8,drate>>16,drate>>24);
+      dblock = (bps>>3)*channels;
+      fprintf(out, "%c%c", /* data block size(bytes) */
+              dblock,dblock>>8);
+      fprintf(out, "%c%c", /* bps */
+              bps,bps>>8);
+      fprintf(out, "data%c%c%c%c",0,0,0,0); /* sample header */
+    }
+#endif
     }
   }
 
