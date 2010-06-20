@@ -268,7 +268,7 @@ mdct_backward_arm_low
 find_shift_loop
 	TST	r0, r2		; if (n & (1<<shift)) == 0
 	MOV	r2, r2, LSL #1
-	SUBEQ	r3, r3, #1	; shift--
+	SUBEQ	r3, r3, #1	; r3--      shift++
 	BEQ	find_shift_loop
 	MOV	r2, #2
 	MOV	r2, r2, LSL r3	; r2 = step = 2<<shift
@@ -1094,10 +1094,10 @@ mdct_step8_default
 	MOV	r8, r8, ASR #8
 	MUL	r10,r8, r12		; r10  = s1 * T[1]
 	CMP	r1, r7
-	MLA	r10,r6, r14,r10	; r10 += s0 * T[0]
+	MLA	r10,r6, r14,r10		; r10 += s0 * T[0]
 	RSB	r6, r6, #0		; r6 = -s0
 	MUL	r11,r8, r14		; r11  = s1 * T[0]
-	MLA	r11,r6, r12,r11	; r11 -= s0 * T[1]
+	MLA	r11,r6, r12,r11		; r11 -= s0 * T[1]
 	STR	r10,[r1,#-8]
 	STR	r11,[r1,#-4]
 	BLT	mdct_step8_default
