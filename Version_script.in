@@ -51,6 +51,7 @@
 		vorbis_synthesis_init;
 		vorbis_synthesis_restart;
 		vorbis_synthesis;
+		vorbis_synthesis_trackonly;
 		vorbis_synthesis_blockin;
 		vorbis_synthesis_pcmout;
 		vorbis_synthesis_read;

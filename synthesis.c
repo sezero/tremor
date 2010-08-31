@@ -24,7 +24,7 @@
 #include "misc.h"
 #include "block.h"
 
-int vorbis_synthesis(vorbis_block *vb,ogg_packet *op,int decodep){
+static int _vorbis_synthesis1(vorbis_block *vb,ogg_packet *op,int decodep){
   vorbis_dsp_state     *vd=vb->vd;
   private_state        *b=(private_state *)vd->backend_state;
   vorbis_info          *vi=vd->vi;
@@ -80,6 +80,14 @@ int vorbis_synthesis(vorbis_block *vb,ogg_packet *op,int decodep){
     
     return(0);
   }
+}
+
+int vorbis_synthesis(vorbis_block *vb,ogg_packet *op){
+  return _vorbis_synthesis1(vb,op,1);
+}
+
+int vorbis_synthesis_trackonly(vorbis_block *vb,ogg_packet *op){
+  return _vorbis_synthesis1(vb,op,0);
 }
 
 long vorbis_packet_blocksize(vorbis_info *vi,ogg_packet *op){
