@@ -18,7 +18,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "ogg.h"
+#include <ogg/ogg.h>
 #include "misc.h"
 #include "ivorbiscodec.h"
 #include "codebook.h"

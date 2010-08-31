@@ -19,7 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <math.h>
-#include "ogg.h"
+#include <ogg/ogg.h>
 #include "ivorbiscodec.h"
 #include "mdct.h"
 #include "codec_internal.h"

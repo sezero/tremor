@@ -15,7 +15,7 @@
 
  ********************************************************************/
   
-#include "os_types.h"
+#include "misc.h"
 
 /* {sin(2*i*PI/4096), cos(2*i*PI/4096)}, with i = 0 to 512 */
 static LOOKUP_T sincos_lookup0[1026] = {

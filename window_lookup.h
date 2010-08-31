@@ -16,7 +16,7 @@
  ********************************************************************/
 
 
-#include "os_types.h"
+#include <ogg/os_types.h>
 
 static LOOKUP_T vwin64[32] = {
   X(0x001f0003), X(0x01168c98), X(0x030333c8), X(0x05dfe3a4),

@@ -17,7 +17,7 @@
  ********************************************************************/
 
 #include <stdio.h>
-#include "ogg.h"
+#include <ogg/ogg.h>
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
 #include "registry.h"
@@ -34,7 +34,7 @@ static int _vorbis_synthesis1(vorbis_block *vb,ogg_packet *op,int decodep){
  
   /* first things first.  Make sure decode is ready */
   _vorbis_block_ripcord(vb);
-  oggpack_readinit(opb,op->packet);
+  oggpack_readinit(opb,op->packet,op->bytes);
 
   /* Check the packet type */
   if(oggpack_read(opb,1)!=0){
@@ -86,6 +86,8 @@ int vorbis_synthesis(vorbis_block *vb,ogg_packet *op){
   return _vorbis_synthesis1(vb,op,1);
 }
 
+/* used to track pcm position without actually performing decode.
+   Useful for sequential 'fast forward' */
 int vorbis_synthesis_trackonly(vorbis_block *vb,ogg_packet *op){
   return _vorbis_synthesis1(vb,op,0);
 }
@@ -95,7 +97,7 @@ long vorbis_packet_blocksize(vorbis_info *vi,ogg_packet *op){
   oggpack_buffer       opb;
   int                  mode;
  
-  oggpack_readinit(&opb,op->packet);
+  oggpack_readinit(&opb,op->packet,op->bytes);
 
   /* Check the packet type */
   if(oggpack_read(&opb,1)!=0){

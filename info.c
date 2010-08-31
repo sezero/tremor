@@ -21,7 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "ogg.h"
+#include <ogg/ogg.h>
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
 #include "codebook.h"
@@ -299,7 +299,7 @@ int vorbis_synthesis_idheader(ogg_packet *op){
   char buffer[6];
 
   if(op){
-    oggpack_readinit(&opb,op->packet);
+    oggpack_readinit(&opb,op->packet,op->bytes);
 
     if(!op->b_o_s)
       return(0); /* Not the initial packet */
@@ -327,7 +327,7 @@ int vorbis_synthesis_headerin(vorbis_info *vi,vorbis_comment *vc,ogg_packet *op)
   oggpack_buffer opb;
   
   if(op){
-    oggpack_readinit(&opb,op->packet);
+    oggpack_readinit(&opb,op->packet,op->bytes);
 
     /* Which of the three types of header is this? */
     /* Also verify header-ness, vorbis */
