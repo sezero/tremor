@@ -69,7 +69,7 @@
 static long _get_data(OggVorbis_File *vf){
   errno=0;
   if(vf->datasource){
-    char *buffer=ogg_sync_bufferin(vf->oy,CHUNKSIZE);
+    unsigned char *buffer=ogg_sync_bufferin(vf->oy,CHUNKSIZE);
     long bytes=(vf->callbacks.read_func)(buffer,1,CHUNKSIZE,vf->datasource);
     if(bytes>0)ogg_sync_wrote(vf->oy,bytes);
     if(bytes==0 && errno)return -1;
@@ -716,7 +716,7 @@ static int _ov_open1(void *f,OggVorbis_File *vf,char *initial,
      previously read data (as we may be reading from a non-seekable
      stream) */
   if(initial){
-    char *buffer=ogg_sync_bufferin(vf->oy,ibytes);
+    unsigned char *buffer=ogg_sync_bufferin(vf->oy,ibytes);
     memcpy(buffer,initial,ibytes);
     ogg_sync_wrote(vf->oy,ibytes);
   }
@@ -1476,7 +1476,7 @@ ogg_int64_t ov_pcm_tell(OggVorbis_File *vf){
 
 /* return time offset (milliseconds) of next PCM sample to be read */
 ogg_int64_t ov_time_tell(OggVorbis_File *vf){
-  int link=0,ret;
+  int link=0;
   ogg_int64_t pcm_total=0;
   ogg_int64_t time_total=0;
   
@@ -1555,7 +1555,6 @@ vorbis_comment *ov_comment(OggVorbis_File *vf,int link){
 	    *section) set to the logical bitstream number */
 
 long ov_read(OggVorbis_File *vf,void *buffer,int bytes_req,int *bitstream){
-  int i,j;
 
   long samples;
   long channels;
