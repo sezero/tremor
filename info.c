@@ -186,22 +186,31 @@ static int _vorbis_unpack_info(vorbis_info *vi,oggpack_buffer *opb){
 
 static int _vorbis_unpack_comment(vorbis_comment *vc,oggpack_buffer *opb){
   int i;
-  int vendorlen=oggpack_read(opb,32);
+  int vendorlen;
+  vendorlen=oggpack_read(opb,32);
   if(vendorlen<0)goto err_out;
+  if(vendorlen>opb->storage-oggpack_bytes(opb))goto err_out;
   vc->vendor=(char *)_ogg_calloc(vendorlen+1,1);
+  if(vc->vendor==NULL)goto err_out;
   _v_readstring(opb,vc->vendor,vendorlen);
-  vc->comments=oggpack_read(opb,32);
-  if(vc->comments<0)goto err_out;
+  i=oggpack_read(opb,32);
+  if(i<0||i>(opb->storage-oggpack_bytes(opb))>>2)goto err_out;
   vc->user_comments=(char **)_ogg_calloc(vc->comments+1,sizeof(*vc->user_comments));
   vc->comment_lengths=(int *)_ogg_calloc(vc->comments+1, sizeof(*vc->comment_lengths));
-	    
+  if(vc->user_comments==NULL||vc->comment_lengths==NULL)goto err_out;
+  vc->comments=i;
+
   for(i=0;i<vc->comments;i++){
     int len=oggpack_read(opb,32);
-    if(len<0)goto err_out;
-	vc->comment_lengths[i]=len;
+    if(len<0||len>opb->storage-oggpack_bytes(opb))goto err_out;
+    vc->comment_lengths[i]=len;
     vc->user_comments[i]=(char *)_ogg_calloc(len+1,1);
+    if(vc->user_comments[i]==NULL){
+      vc->comments=i;
+      goto err_out;
+    }
     _v_readstring(opb,vc->user_comments[i],len);
-  }	  
+  }
   if(oggpack_read(opb,1)!=1)goto err_out; /* EOP check */
 
   return(0);
