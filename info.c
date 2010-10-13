@@ -21,6 +21,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <limits.h>
 #include <ogg/ogg.h>
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
@@ -194,9 +195,9 @@ static int _vorbis_unpack_comment(vorbis_comment *vc,oggpack_buffer *opb){
   if(vc->vendor==NULL)goto err_out;
   _v_readstring(opb,vc->vendor,vendorlen);
   i=oggpack_read(opb,32);
-  if(i<0||i>(opb->storage-oggpack_bytes(opb))>>2)goto err_out;
-  vc->user_comments=(char **)_ogg_calloc(vc->comments+1,sizeof(*vc->user_comments));
-  vc->comment_lengths=(int *)_ogg_calloc(vc->comments+1, sizeof(*vc->comment_lengths));
+  if(i<0||i>=INT_MAX||i>(opb->storage-oggpack_bytes(opb))>>2)goto err_out;
+  vc->user_comments=(char **)_ogg_calloc(i+1,sizeof(*vc->user_comments));
+  vc->comment_lengths=(int *)_ogg_calloc(i+1, sizeof(*vc->comment_lengths));
   if(vc->user_comments==NULL||vc->comment_lengths==NULL)goto err_out;
   vc->comments=i;
 
