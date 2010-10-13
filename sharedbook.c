@@ -129,7 +129,6 @@ ogg_uint32_t *_make_words(long *l,long n,long sparsecount){
      but the above tree-gen code doesn't mark that. */
   if(sparsecount != 1){
     for(i=1;i<33;i++)
-      printf("%2li: 0x%08lX\n", i, marker[i] & (0xffffffffUL>>(32-i)));
       if(marker[i] & (0xffffffffUL>>(32-i))){
        _ogg_free(r);
        return(NULL);
