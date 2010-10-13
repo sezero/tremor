@@ -148,6 +148,8 @@ static int _vds_init(vorbis_dsp_state *v,vorbis_info *vi){
   codec_setup_info *ci=(codec_setup_info *)vi->codec_setup;
   private_state *b=NULL;
 
+  if(ci==NULL) return 1;
+
   memset(v,0,sizeof(*v));
   b=(private_state *)(v->backend_state=_ogg_calloc(1,sizeof(*b)));
 
@@ -188,7 +190,7 @@ static int _vds_init(vorbis_dsp_state *v,vorbis_info *vi){
     b->mode[i]=_mapping_P[maptype]->look(v,ci->mode_param[i],
 					 ci->map_param[mapnum]);
   }
-  return(0);
+  return 0;
 }
 
 int vorbis_synthesis_restart(vorbis_dsp_state *v){
@@ -212,10 +214,10 @@ int vorbis_synthesis_restart(vorbis_dsp_state *v){
 }
 
 int vorbis_synthesis_init(vorbis_dsp_state *v,vorbis_info *vi){
-  _vds_init(v,vi);
+  if(_vds_init(v,vi))return 1;
   vorbis_synthesis_restart(v);
 
-  return(0);
+  return 0;
 }
 
 void vorbis_dsp_clear(vorbis_dsp_state *v){
