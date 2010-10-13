@@ -115,6 +115,10 @@ vorbis_info_residue *res0_unpack(vorbis_info *vi,oggpack_buffer *opb){
 
   /* verify the phrasebook is not specifying an impossible or
      inconsistent partitioning scheme. */
+  /* modify the phrasebook ranging check from r16327; an early beta
+     encoder had a bug where it used an oversized phrasebook by
+     accident.  These files should continue to be playable, but don't
+     allow an exploit */
   {
     int entries = ci->book_param[info->groupbook]->entries;
     int dim = ci->book_param[info->groupbook]->dim;
@@ -124,7 +128,7 @@ vorbis_info_residue *res0_unpack(vorbis_info *vi,oggpack_buffer *opb){
       if(partvals > entries) goto errout;
       dim--;
     }
-    if(partvals != entries) goto errout;
+    info->partvals = partvals;
   }
 
   return(info);
@@ -168,8 +172,7 @@ vorbis_look_residue *res0_look(vorbis_dsp_state *vd,vorbis_info_mode *vm,
     }
   }
 
-  look->partvals=look->parts;
-  for(j=1;j<dim;j++)look->partvals*=look->parts;
+  look->partvals=look->phrasebook->entries;
   look->stages=maxstage;
   look->decodemap=(int **)_ogg_malloc(look->partvals*sizeof(*look->decodemap));
   for(j=0;j<look->partvals;j++){
@@ -222,7 +225,7 @@ static int _01inverse(vorbis_block *vb,vorbis_look_residue *vl,
 	  /* fetch the partition word for each channel */
 	  for(j=0;j<ch;j++){
 	    int temp=vorbis_book_decode(look->phrasebook,&vb->opb);
-	    if(temp==-1)goto eopbreak;
+	    if(temp==-1 || temp>=info->partvals)goto eopbreak;
 	    partword[j][l]=look->decodemap[temp];
 	    if(partword[j][l]==NULL)goto errout;
 	  }
@@ -304,7 +307,7 @@ int res2_inverse(vorbis_block *vb,vorbis_look_residue *vl,
 	if(s==0){
 	  /* fetch the partition word */
 	  int temp=vorbis_book_decode(look->phrasebook,&vb->opb);
-	  if(temp==-1)goto eopbreak;
+	  if(temp==-1 || temp>info->partvals)goto eopbreak;
 	  partword[l]=look->decodemap[temp];
 	  if(partword[l]==NULL)goto errout;
 	}
