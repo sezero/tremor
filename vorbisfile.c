@@ -194,7 +194,7 @@ static void _add_serialno(ogg_page *og,ogg_uint32_t **serialno_list, int *n){
 }
 
 /* returns nonzero if found */
-static int _lookup_serialno(long s, ogg_uint32_t *serialno_list, int n){
+static int _lookup_serialno(ogg_uint32_t s, ogg_uint32_t *serialno_list, int n){
   if(serialno_list){
     while(n--){
       if(*serialno_list == s) return 1;
@@ -205,7 +205,7 @@ static int _lookup_serialno(long s, ogg_uint32_t *serialno_list, int n){
 }
 
 static int _lookup_page_serialno(ogg_page *og, ogg_uint32_t *serialno_list, int n){
-  long s = ogg_page_serialno(og);
+  ogg_uint32_t s = ogg_page_serialno(og);
   return _lookup_serialno(s,serialno_list,n);
 }
 
@@ -246,12 +246,12 @@ static ogg_int64_t _get_prev_page_serial(OggVorbis_File *vf,
         ret_gran=ogg_page_granulepos(&og);
         offset=ret;
 
-        if(ret_serialno == *serialno){
+        if((ogg_uint32_t)ret_serialno == *serialno){
           prefoffset=ret;
           *granpos=ret_gran;
         }
 
-        if(!_lookup_serialno(ret_serialno,serial_list,serial_n)){
+        if(!_lookup_serialno((ogg_uint32_t)ret_serialno,serial_list,serial_n)){
           /* we fell off the end of the link, which means we seeked
              back too far and shouldn't have been looking in that link
              to begin with.  If we found the preferred serial number,
