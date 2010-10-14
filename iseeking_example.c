@@ -199,7 +199,7 @@ int main(){
 
     fprintf(stderr,"\r");
     {
-      fprintf(stderr,"testing time page seeking to random places in %ld seconds....\n",
+      fprintf(stderr,"testing time page seeking to random places in %ld milliseconds....\n",
               (long)timelength);
     
       for(i=0;i<1000;i++){
@@ -218,7 +218,7 @@ int main(){
 
     fprintf(stderr,"\r");
     {
-      fprintf(stderr,"testing time exact seeking to random places in %ld seconds....\n",
+      fprintf(stderr,"testing time exact seeking to random places in %ld milliseconds....\n",
               (long)timelength);
     
       for(i=0;i<1000;i++){
