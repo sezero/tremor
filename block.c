@@ -401,17 +401,32 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
       if(b->sample_count>v->granulepos){
 	/* corner case; if this is both the first and last audio page,
 	   then spec says the end is cut, not beginning */
+	long extra=b->sample_count-vb->granulepos;
+
+        /* we use ogg_int64_t for granule positions because a
+           uint64 isn't universally available.  Unfortunately,
+           that means granposes can be 'negative' and result in
+           extra being negative */
+        if(extra<0)
+          extra=0;
+
 	if(vb->eofflag){
 	  /* trim the end */
 	  /* no preceeding granulepos; assume we started at zero (we'd
 	     have to in a short single-page stream) */
 	  /* granulepos could be -1 due to a seek, but that would result
 	     in a long coun`t, not short count */
-	  
-	  v->pcm_current-=(b->sample_count-v->granulepos);
+
+          /* Guard against corrupt/malicious frames that set EOP and
+             a backdated granpos; don't rewind more samples than we
+             actually have */
+          if(extra > v->pcm_current - v->pcm_returned)
+            extra = v->pcm_current - v->pcm_returned;
+
+	  v->pcm_current-=extra;
 	}else{
 	  /* trim the beginning */
-	  v->pcm_returned+=(b->sample_count-v->granulepos);
+	  v->pcm_returned+=extra;
 	  if(v->pcm_returned>v->pcm_current)
 	    v->pcm_returned=v->pcm_current;
 	}
@@ -429,7 +444,22 @@ int vorbis_synthesis_blockin(vorbis_dsp_state *v,vorbis_block *vb){
 	if(extra)
 	  if(vb->eofflag){
 	    /* partial last frame.  Strip the extra samples off */
-	    v->pcm_current-=extra;
+
+            /* Guard against corrupt/malicious frames that set EOP and
+               a backdated granpos; don't rewind more samples than we
+               actually have */
+            if(extra > v->pcm_current - v->pcm_returned)
+              extra = v->pcm_current - v->pcm_returned;
+
+            /* we use ogg_int64_t for granule positions because a
+               uint64 isn't universally available.  Unfortunately,
+               that means granposes can be 'negative' and result in
+               extra being negative */
+            if(extra<0)
+              extra=0;
+
+            v->pcm_current-=extra;
+
 	  } /* else {Shouldn't happen *unless* the bitstream is out of
 	       spec.  Either way, believe the bitstream } */
       } /* else {Shouldn't happen *unless* the bitstream is out of
