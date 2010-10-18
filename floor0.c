@@ -397,10 +397,9 @@ static void *floor0_inverse1(vorbis_block *vb,vorbis_look_floor *i){
       ogg_int32_t last=0;
       ogg_int32_t *lsp=(ogg_int32_t *)_vorbis_block_alloc(vb,sizeof(*lsp)*(look->m+1));
             
-      for(j=0;j<look->m;j+=b->dim)
-	if(vorbis_book_decodev_set(b,lsp+j,&vb->opb,b->dim,-24)==-1)goto eop;
+      if(vorbis_book_decodev_set(b,lsp,&vb->opb,look->m,-24)==-1)goto eop;
       for(j=0;j<look->m;){
-	for(k=0;k<b->dim;k++,j++)lsp[j]+=last;
+	for(k=0;j<look->m && k<b->dim;k++,j++)lsp[j]+=last;
 	last=lsp[j-1];
       }
       
