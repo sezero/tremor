@@ -181,7 +181,7 @@ static ogg_int64_t _get_prev_page(OggVorbis_File *vf,ogg_page *og){
 }
 
 static void _add_serialno(ogg_page *og,ogg_uint32_t **serialno_list, int *n){
-  long s = ogg_page_serialno(og);
+  ogg_uint32_t s = ogg_page_serialno(og);
   (*n)++;
 
   if(*serialno_list){
@@ -820,7 +820,7 @@ static int _fetch_and_process_packet(OggVorbis_File *vf,
 
       if(vf->ready_state<STREAMSET){
         if(vf->seekable){
-          long serialno = ogg_page_serialno(&og);
+          ogg_uint32_t serialno = ogg_page_serialno(&og);
 
           /* match the serialno to bitstream section.  We use this rather than
              offset positions to avoid problems near logical bitstream
@@ -1315,7 +1315,7 @@ int ov_raw_seek(OggVorbis_File *vf,ogg_int64_t pos){
 
       if(vf->ready_state<STREAMSET){
         int link;
-        long serialno = ogg_page_serialno(&og);
+        ogg_uint32_t serialno = ogg_page_serialno(&og);
 
         for(link=0;link<vf->links;link++)
           if(vf->serialnos[link]==serialno)break;
@@ -1627,7 +1627,7 @@ int ov_pcm_seek(OggVorbis_File *vf,ogg_int64_t pos){
       if(ogg_page_bos(&og))_decode_clear(vf);
 
       if(vf->ready_state<STREAMSET){
-        long serialno=ogg_page_serialno(&og);
+        ogg_uint32_t serialno=ogg_page_serialno(&og);
         int link;
 
         for(link=0;link<vf->links;link++)
