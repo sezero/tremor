@@ -135,6 +135,7 @@ vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
   count=0;
   for(j=0,k=0;j<info->partitions;j++){
     count+=info->class[info->partitionclass[j]].class_dim; 
+    if(count>VIF_POSIT)goto err_out;
     for(;k<count;k++){
       int t=info->postlist[k+2]=oggpack_read(opb,rangebits);
       if(t>=(1<<rangebits))goto err_out;
