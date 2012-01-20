@@ -11,7 +11,7 @@ AC_CANONICAL_TARGET
 
 AM_CONFIG_HEADER([config.h])
 
-AM_INIT_AUTOMAKE(libvorbisidec,1.2.0)
+AM_INIT_AUTOMAKE(libvorbisidec,1.2.1)
 
 dnl AM_MAINTAINER_MODE only provides the option to configure to enable it
 AM_MAINTAINER_MODE
@@ -19,7 +19,7 @@ AM_MAINTAINER_MODE
 dnl Library versioning
 
 V_LIB_CURRENT=1
-V_LIB_REVISION=2
+V_LIB_REVISION=3
 V_LIB_AGE=0
 AC_SUBST(V_LIB_CURRENT)
 AC_SUBST(V_LIB_REVISION)
