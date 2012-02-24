@@ -64,6 +64,7 @@ static inline void XPROD32(ogg_int32_t  a, ogg_int32_t  b,
   *y = y1;
 }
 
+/* x = (a*t + b*v)>>31,    y = (b*t - a*v)>>31 */
 static inline void XPROD31(ogg_int32_t  a, ogg_int32_t  b,
 			   ogg_int32_t  t, ogg_int32_t  v,
 			   ogg_int32_t *x, ogg_int32_t *y)
@@ -82,6 +83,7 @@ static inline void XPROD31(ogg_int32_t  a, ogg_int32_t  b,
   *y = y1 << 1;
 }
 
+/* x = (a*t - b*v)>>31,     y = (b*t + a*v)>>31 */
 static inline void XNPROD31(ogg_int32_t  a, ogg_int32_t  b,
 			    ogg_int32_t  t, ogg_int32_t  v,
 			    ogg_int32_t *x, ogg_int32_t *y)
