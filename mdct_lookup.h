@@ -18,7 +18,7 @@
 #include "os_types.h"
 
 /* {sin(2*i*PI/4096), cos(2*i*PI/4096)}, with i = 0 to 512 */
-#ifndef _ARM_ASSEM_
+#if !defined(_ARM_ASSEM_) && !defined(MIPS_DSP)
 static
 #endif
 LOOKUP_T sincos_lookup0[1026] = {
@@ -282,7 +282,7 @@ LOOKUP_T sincos_lookup0[1026] = {
   };
   
   /* {sin((2*i+1)*PI/4096), cos((2*i+1)*PI/4096)}, with i = 0 to 511 */
-#ifndef _ARM_ASSEM_
+#if !defined(_ARM_ASSEM_) && !defined(MIPS_DSP)
 static
 #endif
 LOOKUP_T sincos_lookup1[1024] = {
