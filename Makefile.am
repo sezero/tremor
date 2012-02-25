@@ -7,13 +7,17 @@ pkgconfig_DATA = vorbisidec.pc
 
 lib_LTLIBRARIES = libvorbisidec.la
 
+TARGET_SPECIFIC_SOURCES =
+
 if ARM_TARGET
 # Build both low and full accuracy versions and the linker will only
 # include the appropriate versions.
-TARGET_SPECIFIC_SOURCES = mdctARM.s mdctLARM.s floor1ARM.s floor1LARM.s \
+TARGET_SPECIFIC_SOURCES += mdctARM.s mdctLARM.s floor1ARM.s floor1LARM.s \
 			bitwiseARM.s
-else
-TARGET_SPECIFIC_SOURCES =
+endif
+
+if MIPS_TARGET
+TARGET_SPECIFIC_SOURCES += mips-dspr1/mdct_backwardMIPS.S mips-dspr1/decode_mapMIPS.S mips-dspr1/floor1_inverse2MIPS.S
 endif
 
 libvorbisidec_la_SOURCES = mdct.c dsp.c info.c misc.c \
