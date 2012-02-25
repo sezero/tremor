@@ -46,6 +46,7 @@ dnl --------------------------------------------------
 dnl Set some target options
 
 arm_target=0
+mips_target=0
 cflags_save="$CFLAGS"
 ldflags_save="$LDFLAGS"
 if test -z "$GCC"; then
@@ -55,6 +56,17 @@ if test -z "$GCC"; then
                 DEBUG="-g -D_ARM_ASSEM_" 
                 CFLAGS="-O -D_ARM_ASSEM_"
                 PROFILE="-p -g -O -D_ARM_ASSEM" ;;
+        *)
+                DEBUG="-g"
+                CFLAGS="-O"
+                PROFILE="-g -p" ;;
+        esac
+        case host in
+        mips-*-*)
+        mips_target=1
+                DEBUG="-g -EL -mips32r2 -mdsp -DMIPS_DSP -DMIPS_ASM"
+                CFLAGS="-O -EL -mips32r2 -mdsp -DMIPS_DSP -DMIPS_ASM -DLITTLE_ENDIAN=1"
+                PROFILE="-p -g -O -EL -mips32r2 -mdsp -DMIPS_DSP -DMIPS_ASM" ;;
         *)
                 DEBUG="-g"
                 CFLAGS="-O"
@@ -74,11 +86,25 @@ else
                 CFLAGS="-O2 -Wall -fsigned-char"
                 PROFILE="-Wall -pg -g -O2 -fsigned-char -fno-inline-functions";;
         esac
+        case $host in
+        mips-*-*)
+        mips_target=1
+                DEBUG="-g -Wall -W -mips32r2 -mdsp -fsigned-char -DMIPS_DSP -DMIPS_ASM"
+                CFLAGS="-O3 -Wall -EL -mips32r2 -mdsp -DMIPS_DSP -DMIPS_ASM -fsigned-char -DLITTLE_ENDIAN=1"
+                CCASFLAGS="-O3 -Wall -EL -mips32r2 -mdsp -DMIPS_DSP -DMIPS_ASM -fsigned-char"
+                PROFILE="-Wall -pg -g -O3 -EL -mips32r2 -mdsp -DMIPS_DSP -DMIPS_ASM -fsigned-char -fno-inline-functions";;
+
+        *)
+                DEBUG="-g -Wall -W -fsigned-char"
+                CFLAGS="-O2 -Wall -fsigned-char"
+                PROFILE="-Wall -pg -g -O2 -fsigned-char -fno-inline-functions";;
+        esac
 fi
 CFLAGS="$CFLAGS $cflags_save -D_REENTRANT"
 LDFLAGS="$LDFLAGS $ldflags_save"
 
 AM_CONDITIONAL(ARM_TARGET, test x$arm_target = 1)
+AM_CONDITIONAL(MIPS_TARGET, test $mips_target = 1)
 
 # Test whenever ld supports -version-script
 AC_PROG_LD
