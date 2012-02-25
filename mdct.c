@@ -74,7 +74,7 @@ extern ogg_int16_t *ARM_SUFFIX(mdct_unroll_postlap)(ogg_int16_t *out,
                                                     int          step);
 #endif
 
-#ifndef _ARM_ASSEM_
+#if !defined(_ARM_ASSEM_) && !defined(MIPS_DSP)
 STIN void presymmetry(DATA_TYPE *in,int n2,int step){
   DATA_TYPE *aX;
   DATA_TYPE *bX;
@@ -328,6 +328,7 @@ STIN void mdct_step7(DATA_TYPE *x,int n,int step){
 }
 #endif
 
+#ifndef MIPS_DSP
 STIN void mdct_step8(DATA_TYPE *x, int n, int step){
   LOOKUP_T *T;
   LOOKUP_T *V;
@@ -442,6 +443,7 @@ void mdct_backward(int n, DATA_TYPE *in){
     mdct_step8(in,n,step);
 #endif
 }
+#endif //MIPS_DSP
 
 void mdct_shift_right(int n, DATA_TYPE *in, DATA_TYPE *right) {
 #ifdef _ARM_ASSEM_
@@ -456,6 +458,7 @@ void mdct_shift_right(int n, DATA_TYPE *in, DATA_TYPE *right) {
 #endif
 }
 
+#ifndef MIPS_DSP
 void mdct_unroll_lap(int n0,int n1,
 		     int lW,int W,
 		     DATA_TYPE *in,
@@ -570,3 +573,4 @@ void mdct_unroll_lap(int n0,int n1,
 #endif
   }
 }
+#endif //MIPS_DSP
