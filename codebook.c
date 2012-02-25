@@ -605,8 +605,13 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
 #ifdef _ARM_ASSEM_
 ogg_uint32_t decode_packed_entry_number(codebook *book, oggpack_buffer *b);
 #else
+#ifdef MIPS_ASM
+ogg_uint32_t decode_packed_entry_number(codebook *book,
+                                        oggpack_buffer *b){
+#else
 static inline ogg_uint32_t decode_packed_entry_number(codebook *book, 
 						      oggpack_buffer *b){
+#endif // MIPS_ASM
   ogg_uint32_t chase=0;
   int  read=book->dec_maxlength;
   long lok = oggpack_look(b,read),i;
@@ -706,10 +711,10 @@ long vorbis_book_decode(codebook *book, oggpack_buffer *b){
  return decode_packed_entry_number(book,b);
 }
 
-#ifdef _ARM_ASSEM_
+#if defined(_ARM_ASSEM_) || defined(MIPS_ASM)
 int decode_map(codebook *s, oggpack_buffer *b, ogg_int32_t *v, int point);
 #else
-int decode_map(codebook *s, oggpack_buffer *b, ogg_int32_t *v, int point){
+static int decode_map(codebook *s, oggpack_buffer *b, ogg_int32_t *v, int point){
   ogg_uint32_t entry = decode_packed_entry_number(s,b);
   int i;
   if(oggpack_eop(b))return(-1);
@@ -738,18 +743,15 @@ int decode_map(codebook *s, oggpack_buffer *b, ogg_int32_t *v, int point){
     break;
   }
   case 3:{
+    /* offset into array */
+    void *ptr=s->q_val+entry*s->q_pack;
+
     if(s->q_bits<=8){
-        for(i=0;i<s->dim;i++) {
-          /* offset into array */
-          unsigned char *ptr=(unsigned char *)s->q_val+entry*s->q_pack;
-          v[i]=ptr[i];
-        }
+        for(i=0;i<s->dim;i++)
+            v[i]=((unsigned char *)ptr)[i];
     }else{
-        for(i=0;i<s->dim;i++) {
-            /* offset into array */
-            ogg_uint16_t *ptr=(ogg_uint16_t *)s->q_val+entry*s->q_pack;
-            v[i]=ptr[i];
-        }
+        for(i=0;i<s->dim;i++)
+            v[i]=((ogg_uint16_t *)ptr)[i];
     }
     break;
   }
@@ -848,6 +850,7 @@ long vorbis_book_decodevv_add(codebook *book,ogg_int32_t **a,
 			      long offset,int ch,
 			      oggpack_buffer *b,int n,int point);
 #else
+#ifndef MIPS_ASM
 long vorbis_book_decodevv_add(codebook *book,ogg_int32_t **a,
 			      long offset,int ch,
 			      oggpack_buffer *b,int n,int point){
@@ -872,4 +875,5 @@ long vorbis_book_decodevv_add(codebook *book,ogg_int32_t **a,
 
   return 0;
 }
+#endif //MIPS_ASM
 #endif
