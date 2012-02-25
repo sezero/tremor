@@ -122,7 +122,7 @@ vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
   rangebits=oggpack_read(opb,4);
 
   for(j=0,k=0;j<info->partitions;j++)
-    count+=info->class[(int)info->partitionclass[j]].class_dim; 
+    count+=info->class[(int)info->partitionclass[j]].class_dim;
   info->postlist=
     (ogg_uint16_t *)_ogg_malloc((count+2)*sizeof(*info->postlist));
   info->forward_index=
@@ -134,7 +134,7 @@ vorbis_info_floor *floor1_info_unpack (vorbis_info *vi,oggpack_buffer *opb){
 
   count=0;
   for(j=0,k=0;j<info->partitions;j++){
-    count+=info->class[(int)info->partitionclass[j]].class_dim; 
+    count+=info->class[(int)info->partitionclass[j]].class_dim;
     for(;k<count;k++){
       int t=info->postlist[k+2]=(ogg_uint16_t)oggpack_read(opb,rangebits);
       if(t>=(1<<rangebits))goto err_out;
@@ -202,6 +202,7 @@ void render_line_arm_low(int n, ogg_int32_t *d,const ogg_int32_t *floor,
                          int base, int err, int adx, int ady);
 #endif
 
+#ifndef MIPS_DSP
 static void render_line(int n,int x0,int x1,int y0,int y1,ogg_int32_t *d){
   int dy;
   int adx;
@@ -258,6 +259,7 @@ static void render_line(int n,int x0,int x1,int y0,int y1,ogg_int32_t *d){
   } while(n>0);
 #endif
 }
+#endif //MIPS_DSP
 
 int floor1_memosize(vorbis_info_floor *i){
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)i;
@@ -352,6 +354,7 @@ ogg_int32_t *floor1_inverse1(vorbis_dsp_state *vd,vorbis_info_floor *in,
   return(NULL);
 }
 
+#ifndef MIPS_DSP
 int floor1_inverse2(vorbis_dsp_state *vd,vorbis_info_floor *in,
 		    ogg_int32_t *fit_value,ogg_int32_t *out){
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)in;
@@ -385,3 +388,4 @@ int floor1_inverse2(vorbis_dsp_state *vd,vorbis_info_floor *in,
   memset(out,0,sizeof(*out)*n);
   return(0);
 }
+#endif //MIPS_DSP
