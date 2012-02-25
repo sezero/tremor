@@ -31,7 +31,7 @@
 /* helpers */
 static void _v_readstring(oggpack_buffer *o,char *buf,int bytes){
   while(bytes--){
-    *buf++=oggpack_read(o,8);
+    *buf++=(char)oggpack_read(o,8);
   }
 }
 
@@ -242,7 +242,7 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
   ci->floor_param=_ogg_malloc(sizeof(*ci->floor_param)*ci->floors);
   ci->floor_type=_ogg_malloc(sizeof(*ci->floor_type)*ci->floors);
   for(i=0;i<ci->floors;i++){
-    ci->floor_type[i]=oggpack_read(opb,16);
+    ci->floor_type[i]=(char)oggpack_read(opb,16);
     if(ci->floor_type[i]<0 || ci->floor_type[i]>=VI_FLOORB)goto err_out;
     if(ci->floor_type[i])
       ci->floor_param[i]=floor1_info_unpack(vi,opb);
@@ -270,10 +270,10 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
   ci->mode_param=
     (vorbis_info_mode *)_ogg_malloc(ci->modes*sizeof(*ci->mode_param));
   for(i=0;i<ci->modes;i++){
-    ci->mode_param[i].blockflag=oggpack_read(opb,1);
+    ci->mode_param[i].blockflag=(unsigned char)oggpack_read(opb,1);
     if(oggpack_read(opb,16))goto err_out;
     if(oggpack_read(opb,16))goto err_out;
-    ci->mode_param[i].mapping=oggpack_read(opb,8);
+    ci->mode_param[i].mapping=(unsigned char)oggpack_read(opb,8);
     if(ci->mode_param[i].mapping>=ci->maps)goto err_out;
   }
   
