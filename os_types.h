@@ -32,7 +32,17 @@
 #define _ogg_realloc realloc
 #define _ogg_free    free
 
-#ifdef _WIN32 
+#if defined (_WIN32_WCE)
+
+   typedef unsigned short ogg_uint16_t;
+   typedef short ogg_int16_t;
+   typedef int ogg_int32_t;
+   typedef unsigned int ogg_uint32_t;
+   typedef __int64 ogg_int64_t;
+
+   #define inline
+
+#elif defined(_WIN32)
 
 #  ifndef __GNUC__
    /* MSVC/Borland */
