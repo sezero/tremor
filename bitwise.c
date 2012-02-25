@@ -70,8 +70,13 @@ void oggpack_readinit(oggpack_buffer *b,ogg_reference *r){
 
   b->tail=b->head=r;
   b->count=0;
-  b->headptr=b->head->buffer->data+b->head->begin;
-  b->headend=b->head->length;
+  if (b->head) {
+    b->headptr=b->head->buffer->data+b->head->begin;
+    b->headend=b->head->length;
+  } else {
+    b->headptr=0;
+    b->headend=0;
+  }
   _span(b);
 }
 
@@ -95,6 +100,7 @@ long oggpack_look(oggpack_buffer *b,int bits){
     ogg_reference *head=b->head;
 
     if(end<0)return -1;
+    if (!head)return -1;
     
     if(bits){
       _lookspan();
@@ -709,4 +715,9 @@ int main(void){
 
   return(0);
 }  
+#ifdef _WIN32_WCE
+int WinMain(void){
+    return main();
+}
+#endif
 #endif
