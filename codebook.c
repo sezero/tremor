@@ -473,7 +473,7 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
   case 1:
 
     /* mapping type 1; implicit values by lattice  position */
-    quantvals=_book_maptype1_quantvals(s);
+    quantvals=(s->dim==0?0:_book_maptype1_quantvals(s));
     
     /* dec_type choices here are 1,2; 3 doesn't make sense */
     {
