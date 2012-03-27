@@ -431,7 +431,7 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
 	long num=oggpack_read(opb,_ilog(s->entries-i));
 	if(num<0)goto _eofout;
 	if(length>32 || num>s->entries-i ||
-	   (num>0 && num-1>>(length>>1)>>((length+1)>>1))>0){
+	   (num>0 && (num-1)>>(length>>1)>>((length+1)>>1))>0){
 	  goto _errout;
 	}
 	for(j=0;j<num;j++,i++)
