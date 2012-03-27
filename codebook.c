@@ -430,6 +430,7 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
       for(i=0;i<s->entries;){
 	long num=oggpack_read(opb,_ilog(s->entries-i));
 	if(num<0)goto _eofout;
+	if(length>32)goto _errout;
 	for(j=0;j<num && i<s->entries;j++,i++)
 	  lengthlist[i]=(char)length;
 	s->dec_maxlength=length;
