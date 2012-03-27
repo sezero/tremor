@@ -340,7 +340,7 @@ ogg_int32_t *floor1_inverse1(vorbis_dsp_state *vd,vorbis_info_floor *in,
 	  }
 	}
 
-	fit_value[i]=val+predicted;
+	fit_value[i]=(val+predicted)&0x7fff;;
 	fit_value[(int)info->loneighbor[i-2]]&=0x7fff;
 	fit_value[(int)info->hineighbor[i-2]]&=0x7fff;
 
@@ -370,6 +370,9 @@ int floor1_inverse2(vorbis_dsp_state *vd,vorbis_info_floor *in,
     int hx=0;
     int lx=0;
     int ly=fit_value[0]*info->mult;
+    /* guard lookup against out-of-range values */
+    ly=(ly<0?0:ly>255?255:ly);
+
     for(j=1;j<info->posts;j++){
       int current=info->forward_index[j];
       int hy=fit_value[current]&0x7fff;
@@ -377,7 +380,9 @@ int floor1_inverse2(vorbis_dsp_state *vd,vorbis_info_floor *in,
 	
 	hy*=info->mult;
 	hx=info->postlist[current];
-	
+        /* guard lookup against out-of-range values */
+        hy=(hy<0?0:hy>255?255:hy);
+
 	render_line(n,lx,hx,ly,hy,out);
 	
 	lx=hx;
