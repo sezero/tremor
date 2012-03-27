@@ -450,7 +450,7 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
     s->q_del=_float32_unpack(oggpack_read(opb,32),&s->q_delp);
     s->q_bits=oggpack_read(opb,4)+1;
     s->q_seq=oggpack_read(opb,1);
-
+    if(s->q_seq==-1)goto _eofout;
     s->q_del>>=s->q_bits;
     s->q_delp+=s->q_bits;
   }

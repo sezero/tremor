@@ -59,7 +59,7 @@ char *vorbis_comment_query(vorbis_comment *vc, char *tag, int count){
 
   strcpy(fulltag, tag);
   strcat(fulltag, "=");
-  
+
   for(i=0;i<vc->comments;i++){
     if(!tagcompare(vc->user_comments[i], fulltag, taglen)){
       if(count == found)
@@ -149,7 +149,7 @@ void vorbis_info_clear(vorbis_info *vi){
 	vorbis_book_clear(ci->book_param+i);
       _ogg_free(ci->book_param);
     }
-    
+
     _ogg_free(ci);
   }
 
@@ -174,7 +174,7 @@ static int _vorbis_unpack_info(vorbis_info *vi,oggpack_buffer *opb){
 
   ci->blocksizes[0]=1<<oggpack_read(opb,4);
   ci->blocksizes[1]=1<<oggpack_read(opb,4);
-  
+
 #ifdef LIMIT_TO_64kHz
   if(vi->rate>=64000 || ci->blocksizes[1]>4096)goto err_out;
 #else
@@ -183,10 +183,10 @@ static int _vorbis_unpack_info(vorbis_info *vi,oggpack_buffer *opb){
 
   if(vi->rate<1)goto err_out;
   if(vi->channels<1)goto err_out;
-  if(ci->blocksizes[0]<64)goto err_out; 
+  if(ci->blocksizes[0]<64)goto err_out;
   if(ci->blocksizes[1]<ci->blocksizes[0])goto err_out;
   if(ci->blocksizes[1]>8192)goto err_out;
-  
+
   if(oggpack_read(opb,1)!=1)goto err_out; /* EOP check */
 
   return(0);
@@ -205,14 +205,14 @@ static int _vorbis_unpack_comment(vorbis_comment *vc,oggpack_buffer *opb){
   if(vc->comments<0)goto err_out;
   vc->user_comments=(char **)_ogg_calloc(vc->comments+1,sizeof(*vc->user_comments));
   vc->comment_lengths=(int *)_ogg_calloc(vc->comments+1, sizeof(*vc->comment_lengths));
-	    
+
   for(i=0;i<vc->comments;i++){
     int len=oggpack_read(opb,32);
     if(len<0)goto err_out;
 	vc->comment_lengths[i]=len;
     vc->user_comments[i]=(char *)_ogg_calloc(len+1,1);
     _v_readstring(opb,vc->user_comments[i],len);
-  }	  
+  }
   if(oggpack_read(opb,1)!=1)goto err_out; /* EOP check */
 
   return(0);
@@ -230,6 +230,7 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
 
   /* codebooks */
   ci->books=oggpack_read(opb,8)+1;
+  if(ci->books<=0)goto err_out;
   ci->book_param=(codebook *)_ogg_calloc(ci->books,sizeof(*ci->book_param));
   for(i=0;i<ci->books;i++)
     if(vorbis_book_unpack(opb,ci->book_param+i))goto err_out;
@@ -241,6 +242,7 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
 
   /* floor backend settings */
   ci->floors=oggpack_read(opb,6)+1;
+  if(ci->floors<=0)goto err_out;
   ci->floor_param=_ogg_malloc(sizeof(*ci->floor_param)*ci->floors);
   ci->floor_type=_ogg_malloc(sizeof(*ci->floor_type)*ci->floors);
   for(i=0;i<ci->floors;i++){
@@ -255,20 +257,23 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
 
   /* residue backend settings */
   ci->residues=oggpack_read(opb,6)+1;
+  if(ci->residues<=0)goto err_out;
   ci->residue_param=_ogg_malloc(sizeof(*ci->residue_param)*ci->residues);
   for(i=0;i<ci->residues;i++)
     if(res_unpack(ci->residue_param+i,vi,opb))goto err_out;
 
   /* map backend settings */
   ci->maps=oggpack_read(opb,6)+1;
+  if(ci->maps<=0)goto err_out;
   ci->map_param=_ogg_malloc(sizeof(*ci->map_param)*ci->maps);
   for(i=0;i<ci->maps;i++){
     if(oggpack_read(opb,16)!=0)goto err_out;
     if(mapping_info_unpack(ci->map_param+i,vi,opb))goto err_out;
   }
-  
+
   /* mode settings */
   ci->modes=oggpack_read(opb,6)+1;
+  if(ci->modes<=0)goto err_out;
   ci->mode_param=
     (vorbis_info_mode *)_ogg_malloc(ci->modes*sizeof(*ci->mode_param));
   for(i=0;i<ci->modes;i++){
@@ -277,8 +282,9 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
     if(oggpack_read(opb,16))goto err_out;
     ci->mode_param[i].mapping=(unsigned char)oggpack_read(opb,8);
     if(ci->mode_param[i].mapping>=ci->maps)goto err_out;
+    if(ci->mode_param[i].mapping<0)goto err_out;
   }
-  
+
   if(oggpack_read(opb,1)!=1)goto err_out; /* top level EOP check */
 
   return(0);
@@ -294,7 +300,7 @@ static int _vorbis_unpack_books(vorbis_info *vi,oggpack_buffer *opb){
 
 int vorbis_dsp_headerin(vorbis_info *vi,vorbis_comment *vc,ogg_packet *op){
   oggpack_buffer opb;
-  
+
   if(op){
     oggpack_readinit(&opb,op->packet);
 
