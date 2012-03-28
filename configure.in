@@ -110,16 +110,7 @@ AM_CONDITIONAL(MIPS_TARGET, test $mips_target = 1)
 AC_PROG_LD
 AC_PROG_LD_GNU
 if test "x$lt_cv_prog_gnu_ld" = "xyes"; then
-   SHLIB_VERSION_ARG="Wl,--version-script=Version_script"
-
-   dnl Set extra linker options
-   case "$target_os" in
-  linux* | solaris* )
-    SHLIB_VERSION_ARG="-Wl,--version-script=Version_script"
-    ;;
-  *)
-    ;;
-   esac
+   SHLIB_VERSION_ARG="-Wl,--version-script=Version_script"
    LDFLAGS="$LDFLAGS $SHLIB_VERSION_ARG"
 fi
 
