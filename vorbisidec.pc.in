@@ -8,7 +8,7 @@ includedir=@includedir@
 Name: vorbisidec
 Description: vorbisidec is the integer Ogg Vorbis library
 Version: @VERSION@
-Requires: ogg
+Requires.private: ogg
 Conflicts:
-Libs: -L${libdir} -lvorbisidec -lm
+Libs: -L${libdir} -lvorbisidec
 Cflags: -I${includedir}
