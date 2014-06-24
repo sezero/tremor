@@ -160,7 +160,7 @@ int main(){
              (long)pcmlength);
     
       for(i=0;i<1000;i++){
-        ogg_int64_t val=(double)rand()*pcmlength/RAND_MAX;
+        ogg_int64_t val=i==0?0:(double)rand()*pcmlength/RAND_MAX;
         fprintf(stderr,"\r\t%d [pcm position %ld]...     ",i,(long)val);
         ret=ov_pcm_seek_page(&ov,val);
         if(ret<0){
@@ -179,7 +179,7 @@ int main(){
              (long)pcmlength);
     
       for(i=0;i<1000;i++){
-        ogg_int64_t val=(double)rand()*pcmlength/RAND_MAX;
+        ogg_int64_t val=i==0?0:(double)rand()*pcmlength/RAND_MAX;
         fprintf(stderr,"\r\t%d [pcm position %ld]...     ",i,(long)val);
         ret=ov_pcm_seek(&ov,val);
         if(ret<0){
