@@ -12,7 +12,7 @@
  ********************************************************************
 
  function: stdio-based convenience library for opening/seeking/decoding
- last mod: $Id: vorbisfile.c,v 1.6 2003/03/30 23:40:56 xiphmont Exp $
+ last mod: $Id$
 
  ********************************************************************/
 
@@ -1421,8 +1421,21 @@ int ov_pcm_seek_page(OggVorbis_File *vf,ogg_int64_t pos){
     ogg_int64_t endtime = vf->pcmlengths[link*2+1]+begintime;
     ogg_int64_t target=pos-total+begintime;
     ogg_int64_t best=-1;
+    int         got_page=0;
 
     ogg_page og;
+
+    /* if we have only one page, there will be no bisection.  Grab the page here */
+    if(begin==end){
+      result=_seek_helper(vf,begin);
+      if(result) goto seek_error;
+
+      result=_get_next_page(vf,&og,1);
+      if(result<0) goto seek_error;
+
+      got_page=1;
+    }
+
     /* bisection loop */
     while(begin<end){
       ogg_int64_t bisect;
@@ -1466,6 +1479,7 @@ int ov_pcm_seek_page(OggVorbis_File *vf,ogg_int64_t pos){
           }
         }else{
           ogg_int64_t granulepos;
+          got_page=1;
 
           /* got a page. analyze it */
           /* only consider pages from primary vorbis stream */
@@ -1528,7 +1542,8 @@ int ov_pcm_seek_page(OggVorbis_File *vf,ogg_int64_t pos){
          bisection would 'fail' because our search target was before the
          first PCM granule position fencepost. */
 
-      if(begin == vf->dataoffsets[link] &&
+      if(got_page &&
+         begin == vf->dataoffsets[link] &&
          ogg_page_serialno(&og)==vf->serialnos[link]){
 
         /* Yes, this is the beginning-of-stream case. We already have
