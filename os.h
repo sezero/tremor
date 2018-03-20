@@ -42,8 +42,6 @@
 
 #ifdef _WIN32
 #  include <malloc.h>
-#  define LITTLE_ENDIAN 1
-#  define BYTE_ORDER LITTLE_ENDIAN
 #endif
 
 #if defined HAVE_ALLOCA
