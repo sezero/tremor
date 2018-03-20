@@ -35,9 +35,9 @@
 #    define STIN static __inline
 #  elif defined(__WATCOMC__)
 #    define STIN static __inline
+#  else
+#    define STIN static
 #  endif
-#else
-#  define STIN static
 #endif
 
 #ifdef _WIN32
