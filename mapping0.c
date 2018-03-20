@@ -129,7 +129,6 @@ static vorbis_info_mapping *mapping0_unpack(vorbis_info *vi,oggpack_buffer *opb)
   int i,b;
   vorbis_info_mapping0 *info=(vorbis_info_mapping0 *)_ogg_calloc(1,sizeof(*info));
   codec_setup_info     *ci=(codec_setup_info *)vi->codec_setup;
-  memset(info,0,sizeof(*info));
 
   b=oggpack_read(opb,1);
   if(b<0)goto err_out;
