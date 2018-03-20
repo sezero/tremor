@@ -130,6 +130,15 @@ dnl --------------------------------------------------
 AC_FUNC_ALLOCA
 AC_FUNC_MEMCMP
 
+AC_MSG_CHECKING(for C99 variable-size arrays)
+AC_TRY_COMPILE( [], [static int x; char a[++x]; a[sizeof a - 1] = 0; int N; return a[0];],
+[has_var_arrays=yes;AC_DEFINE([VAR_ARRAYS], [], [Use C99 variable-size arrays])
+],
+has_var_arrays=no
+)
+AC_MSG_RESULT($has_var_arrays)
+
+
 # do this last after all checks, because Version_script is not generated yet.
 if test "x$lt_cv_prog_gnu_ld" = "xyes"; then
    SHLIB_VERSION_ARG="-Wl,--version-script=Version_script"

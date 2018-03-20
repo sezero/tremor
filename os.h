@@ -49,8 +49,27 @@
 #  define BYTE_ORDER LITTLE_ENDIAN
 #endif
 
-#ifdef HAVE_ALLOCA_H
-#  include <alloca.h>
+#if defined HAVE_ALLOCA
+
+# ifdef _WIN32
+#  include <malloc.h>
+#  define VAR_STACK(type, var, size) type *var = ((type*)_alloca(sizeof(type)*(size)))
+# else
+#  ifdef HAVE_ALLOCA_H
+#   include <alloca.h>
+#  else
+#   include <stdlib.h>
+#  endif
+#  define VAR_STACK(type, var, size) type *var = ((type*) alloca(sizeof(type)*(size)))
+# endif
+
+#elif defined VAR_ARRAYS
+
+#  define VAR_STACK(type, var, size) type var[size]
+
+#else
+
+#error "Either VAR_ARRAYS or HAVE_ALLOCA must be defined to select the stack allocation mode"
 #endif
 
 #ifdef USE_MEMORY_H

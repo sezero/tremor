@@ -193,11 +193,11 @@ static int mapping0_inverse(vorbis_block *vb,vorbis_look_mapping *l){
   int                   i,j;
   long                  n=vb->pcmend=ci->blocksizes[vb->W];
 
-  ogg_int32_t **pcmbundle=(ogg_int32_t **)alloca(sizeof(*pcmbundle)*vi->channels);
-  int    *zerobundle=(int *)alloca(sizeof(*zerobundle)*vi->channels);
+  VAR_STACK(ogg_int32_t *, pcmbundle, vi->channels);
+  VAR_STACK(int, zerobundle, vi->channels);
   
-  int   *nonzero  =(int *)alloca(sizeof(*nonzero)*vi->channels);
-  void **floormemo=(void **)alloca(sizeof(*floormemo)*vi->channels);
+  VAR_STACK(int, nonzero, vi->channels);
+  VAR_STACK(void *, floormemo, vi->channels);
   
   /* time domain information decode (note that applying the
      information would have to happen later; we'll probably add a
