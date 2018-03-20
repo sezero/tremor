@@ -36,7 +36,8 @@ AC_PROG_CC
 AC_PROG_CPP
 CFLAGS="$cflags_save"
 
-AM_PROG_LIBTOOL
+AC_LIBTOOL_WIN32_DLL
+AC_PROG_LIBTOOL
 
 dnl --------------------------------------------------
 dnl Set build flags based on environment
