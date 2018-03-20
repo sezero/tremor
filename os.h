@@ -29,7 +29,11 @@
 
 #  ifdef __GNUC__
 #    define STIN static __inline__
+#  elif defined(__VBCC__)
+#    define STIN static inline
 #  elif defined(_WIN32)
+#    define STIN static __inline
+#  elif defined(__WATCOMC__)
 #    define STIN static __inline
 #  endif
 #else
