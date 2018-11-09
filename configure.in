@@ -5,6 +5,7 @@ dnl Initialization and Versioning
 dnl ------------------------------------------------
 
 AC_INIT(mdct.c)
+AC_CONFIG_MACRO_DIR([m4])
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
