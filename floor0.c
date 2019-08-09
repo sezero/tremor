@@ -393,10 +393,9 @@ ogg_int32_t *floor0_inverse1(vorbis_dsp_state *vd,vorbis_info_floor *i,
       codebook *b=ci->book_param+info->books[booknum];
       ogg_int32_t last=0;
             
-      for(j=0;j<info->order;j+=b->dim)
-	if(vorbis_book_decodev_set(b,lsp+j,&vd->opb,b->dim,-24)==-1)goto eop;
+      if(vorbis_book_decodev_set(b,lsp,&vd->opb,info->order,-24)==-1)goto eop;
       for(j=0;j<info->order;){
-	for(k=0;k<b->dim;k++,j++)lsp[j]+=last;
+	for(k=0;j<info->order && k<b->dim;k++,j++)lsp[j]+=last;
 	last=lsp[j-1];
       }
       

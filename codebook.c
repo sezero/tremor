@@ -712,6 +712,7 @@ int decode_map(codebook *s, oggpack_buffer *b, ogg_int32_t *v, int point){
 }
 
 /* returns 0 on OK or -1 on eof *************************************/
+/* decode vector / dim granularity guarding is done in the upper layer */
 long vorbis_book_decodevs_add(codebook *book,ogg_int32_t *a,
 			      oggpack_buffer *b,int n,int point){
   if(book->used_entries>0){
@@ -728,6 +729,7 @@ long vorbis_book_decodevs_add(codebook *book,ogg_int32_t *a,
   return 0;
 }
 
+/* decode vector / dim granularity guarding is done in the upper layer */
 long vorbis_book_decodev_add(codebook *book,ogg_int32_t *a,
 			     oggpack_buffer *b,int n,int point){
   if(book->used_entries>0){
@@ -743,6 +745,9 @@ long vorbis_book_decodev_add(codebook *book,ogg_int32_t *a,
   return 0;
 }
 
+/* unlike the others, we guard against n not being an integer number
+ * of <dim> internally rather than in the upper layer (called only by
+ * floor0) */
 long vorbis_book_decodev_set(codebook *book,ogg_int32_t *a,
 			     oggpack_buffer *b,int n,int point){
   if(book->used_entries>0){
@@ -751,21 +756,21 @@ long vorbis_book_decodev_set(codebook *book,ogg_int32_t *a,
     
     for(i=0;i<n;){
       if(decode_map(book,b,v,point))return -1;
-      for (j=0;j<book->dim;j++)
+      for (j=0;i<n && j<book->dim;j++)
 	a[i++]=v[j];
     }
   }else{
-    int i,j;
+    int i;
     
     for(i=0;i<n;){
-      for (j=0;j<book->dim;j++)
-	a[i++]=0;
+      a[i++]=0;
     }
   }
 
   return 0;
 }
 
+/* decode vector / dim granularity guarding is done in the upper layer */
 long vorbis_book_decodevv_add(codebook *book,ogg_int32_t **a,
 			      long offset,int ch,
 			      oggpack_buffer *b,int n,int point){
