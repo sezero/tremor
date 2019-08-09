@@ -738,7 +738,7 @@ long vorbis_book_decodev_add(codebook *book,ogg_int32_t *a,
     
     for(i=0;i<n;){
       if(decode_map(book,b,v,point))return -1;
-      for (j=0;j<book->dim;j++)
+      for (j=0;i<n && j<book->dim;j++)
 	a[i++]+=v[j];
     }
   }
@@ -779,10 +779,11 @@ long vorbis_book_decodevv_add(codebook *book,ogg_int32_t **a,
     ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
     long i,j;
     int chptr=0;
+    long m=offset+n;
     
-    for(i=offset;i<offset+n;){
+    for(i=offset;i<m;){
       if(decode_map(book,b,v,point))return -1;
-      for (j=0;j<book->dim;j++){
+      for (j=0;i<m && j<book->dim;j++){
 	a[chptr++][i]+=v[j];
 	if(chptr==ch){
 	  chptr=0;
