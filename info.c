@@ -20,7 +20,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
 #include "ogg.h"
 #include "ivorbiscodec.h"
 #include "codec_internal.h"
@@ -35,6 +34,10 @@ static void _v_readstring(oggpack_buffer *o,char *buf,int bytes){
   }
 }
 
+STIN int _v_toupper(int c) {
+  return (c >= 'a' && c <= 'z') ? (c & ~('a' - 'A')) : c;
+}
+
 void vorbis_comment_init(vorbis_comment *vc){
   memset(vc,0,sizeof(*vc));
 }
@@ -44,7 +47,7 @@ void vorbis_comment_init(vorbis_comment *vc){
 static int tagcompare(const char *s1, const char *s2, int n){
   int c=0;
   while(c < n){
-    if(toupper(s1[c]) != toupper(s2[c]))
+    if(_v_toupper(s1[c]) != _v_toupper(s2[c]))
       return !0;
     c++;
   }
@@ -64,7 +67,7 @@ char *vorbis_comment_query(vorbis_comment *vc, char *tag, int count){
     if(!tagcompare(vc->user_comments[i], fulltag, taglen)){
       if(count == found)
 	/* We return a pointer to the data, not a copy */
-      	return vc->user_comments[i] + taglen;
+	return vc->user_comments[i] + taglen;
       else
 	found++;
     }
@@ -203,14 +206,14 @@ static int _vorbis_unpack_comment(vorbis_comment *vc,oggpack_buffer *opb){
   if(vc->comments<0)goto err_out;
   vc->user_comments=(char **)_ogg_calloc(vc->comments+1,sizeof(*vc->user_comments));
   vc->comment_lengths=(int *)_ogg_calloc(vc->comments+1, sizeof(*vc->comment_lengths));
-	    
+  
   for(i=0;i<vc->comments;i++){
     int len=oggpack_read(opb,32);
     if(len<0)goto err_out;
 	vc->comment_lengths[i]=len;
     vc->user_comments[i]=(char *)_ogg_calloc(len+1,1);
     _v_readstring(opb,vc->user_comments[i],len);
-  }	  
+  }
   if(oggpack_read(opb,1)!=1)goto err_out; /* EOP check */
 
   return(0);
