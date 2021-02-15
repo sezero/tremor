@@ -81,7 +81,7 @@ void oggpack_readinit(oggpack_buffer *b,ogg_reference *r){
 /* Read in bits without advancing the bitptr; bits <= 32 */
 long oggpack_look(oggpack_buffer *b,int bits){
   unsigned long m=mask[bits];
-  unsigned long ret;
+  unsigned long ret=0; /* silence compiler. */
 
   bits+=b->headbit;
 

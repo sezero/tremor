@@ -136,7 +136,7 @@ void vorbis_lsp_to_curve(ogg_int32_t *curve,int n,int ln,
   int ampi=amp;
   ogg_int32_t *ilsp=(ogg_int32_t *)alloca(m*sizeof(*ilsp));
 
-  ogg_uint32_t inyq= (1UL<<31) / toBARK(nyq);
+/*  ogg_uint32_t inyq= (1UL<<31) / toBARK(nyq);*/ /* UNUSED */
   ogg_uint32_t imap= (1UL<<31) / ln;
   ogg_uint32_t tBnyq1 = toBARK(nyq)<<1;
 
