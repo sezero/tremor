@@ -1,6 +1,7 @@
 AUTOMAKE_OPTIONS = foreign
+ACLOCAL_AMFLAGS = -I m4
 
-INCLUDES = -I./
+AM_CPPFLAGS = -I.
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = vorbisidec.pc
@@ -16,7 +17,7 @@ libvorbisidec_la_SOURCES = mdct.c dsp.c info.c misc.c \
                         window_lookup.h floor_lookup.c \
                         codec_internal.h ogg.h \
 			asm_arm.h ivorbiscodec.h
-libvorbisidec_la_LDFLAGS = -version-info @V_LIB_CURRENT@:@V_LIB_REVISION@:@V_LIB_AGE@
+libvorbisidec_la_LDFLAGS = -no-undefined -version-info @V_LIB_CURRENT@:@V_LIB_REVISION@:@V_LIB_AGE@ $(SHLIB_VERSION_ARG)
 
 EXTRA_PROGRAMS = ivorbisfile_example
 CLEANFILES = $(EXTRA_PROGRAMS) $(lib_LTLIBRARIES)
