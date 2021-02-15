@@ -18,6 +18,7 @@
 #include "misc.h"
 #include <sys/time.h>
 
+#ifdef _VDBG_GRAPHFILE
 static void **pointers=NULL;
 static long *insertlist=NULL; /* We can't embed this in the pointer list;
 			  a pointer can have any value... */
@@ -64,7 +65,6 @@ static void *_insert(void *ptr,long bytes,char *file,long line){
   else
     pinsert=insertlist[pinsert];
 
-#ifdef _VDBG_GRAPHFILE
   {
     FILE *out;
     struct timeval tv;
@@ -111,7 +111,6 @@ static void *_insert(void *ptr,long bytes,char *file,long line){
 	    global_bytes+(bytes-HEAD_ALIGN));
     fclose(out);
   }
-#endif
 
   global_bytes+=(bytes-HEAD_ALIGN);
 
@@ -121,7 +120,6 @@ static void *_insert(void *ptr,long bytes,char *file,long line){
 static void _ripremove(void *ptr){
   int insert;
 
-#ifdef _VDBG_GRAPHFILE
   {
     FILE *out=fopen("total"_VDBG_GRAPHFILE,"a");
     struct timeval tv;
@@ -154,7 +152,6 @@ static void _ripremove(void *ptr){
     file_bytes[i]-=bytes;
 
   }
-#endif
 
   global_bytes-=((head *)ptr)->bytes;
 
@@ -205,4 +202,4 @@ extern void _VDBG_free(void *ptr,char *file,long line){
     free(ptr);
   }
 }
-
+#endif
