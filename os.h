@@ -25,22 +25,17 @@
 
 #  ifdef __GNUC__
 #    define STIN static __inline__
-#  elif _WIN32
+#  elif defined(_WIN32)
 #    define STIN static __inline
+#  elif defined(__WATCOMC__)
+#    define STIN static __inline
+#  else
+#    define STIN static
 #  endif
-#else
-#  define STIN static
-#endif
-
-#ifndef M_PI
-#  define M_PI (3.1415926536f)
 #endif
 
 #ifdef _WIN32
 #  include <malloc.h>
-#  define rint(x)   (floor((x)+0.5f)) 
-#  define NO_FLOAT_MATH_LIB
-#  define FAST_HYPOT(a, b) sqrt((a)*(a) + (b)*(b))
 #endif
 
 #ifdef HAVE_ALLOCA_H
