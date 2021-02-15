@@ -93,7 +93,7 @@ dnl Options
 dnl --------------------------------------------------
 
 AC_ARG_ENABLE(low-accuracy,
-   AS_HELP_STRING([--enable-low-accuracy], [enable 32 bit only multiply operations]),
+   [AS_HELP_STRING([--enable-low-accuracy], [enable 32 bit only multiply operations])],
    CFLAGS="$CFLAGS -D_LOW_ACCURACY_"
 )
 

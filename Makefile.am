@@ -45,7 +45,7 @@ example:
 	$(MAKE) iseeking_example
 
 debug:
-	$(MAKE) all CFLAGS="@DEBUG@" 
+	$(MAKE) all CFLAGS="@DEBUG@"
 
 profile:
 	$(MAKE) all CFLAGS="@PROFILE@"
