@@ -48,25 +48,18 @@ extern void _VDBG_free(void *ptr,char *file,long line);
 
 #include <sys/types.h>
 
-#if BYTE_ORDER==LITTLE_ENDIAN
 union magic {
   struct {
-    ogg_int32_t lo;
-    ogg_int32_t hi;
-  } halves;
-  ogg_int64_t whole;
-};
-#endif 
-
-#if BYTE_ORDER==BIG_ENDIAN
-union magic {
-  struct {
+#ifdef WORDS_BIGENDIAN
     ogg_int32_t hi;
     ogg_int32_t lo;
-  } halves;
-  ogg_int64_t whole;
-};
+#else /* little endian */
+    ogg_int32_t lo;
+    ogg_int32_t hi;
 #endif
+  } halves;
+  ogg_int64_t whole;
+};
 
 static inline ogg_int32_t MULT32(ogg_int32_t x, ogg_int32_t y) {
   union magic magic;
