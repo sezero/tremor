@@ -559,7 +559,6 @@ static ogg_uint32_t crc_lookup[256]={
 
 ogg_sync_state *ogg_sync_create(void){
   ogg_sync_state *oy=_ogg_calloc(1,sizeof(*oy));
-  memset(oy,0,sizeof(*oy));
   oy->bufferpool=ogg_buffer_create();
   return oy;
 }
