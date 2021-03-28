@@ -56,7 +56,7 @@ static void _span(oggpack_buffer *b){
       if(b->headend*8<b->headbit)
 	/* read has fallen off the end */
 	b->headend=-1;
-        break;
+      break;
     }
   }
 }
