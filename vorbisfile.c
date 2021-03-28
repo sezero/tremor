@@ -20,7 +20,6 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#include <math.h>
 
 #include "codec_internal.h"
 #include "ivorbisfile.h"

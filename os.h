@@ -17,7 +17,10 @@
 
  ********************************************************************/
 
-#include <math.h>
+#ifdef HAVE_CONFIG_H
+#  include "config.h"
+#endif
+
 #include "os_types.h"
 
 #ifndef _V_IFDEFJAIL_H_
@@ -40,6 +43,8 @@
 
 #ifdef HAVE_ALLOCA_H
 #  include <alloca.h>
+#else
+#  include <stdlib.h>
 #endif
 
 #ifdef USE_MEMORY_H

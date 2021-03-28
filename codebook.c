@@ -17,7 +17,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <math.h>
 #include "ogg.h"
 #include "ivorbiscodec.h"
 #include "codebook.h"
