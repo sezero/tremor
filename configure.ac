@@ -106,6 +106,7 @@ dnl --------------------------------------------------
 dnl Check for headers
 dnl --------------------------------------------------
 
+AC_CHECK_HEADERS(sys/types.h)
 AC_CHECK_HEADER(memory.h,CFLAGS="$CFLAGS -DUSE_MEMORY_H",:)
 
 dnl --------------------------------------------------

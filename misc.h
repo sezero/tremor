@@ -46,8 +46,6 @@ extern void _VDBG_free(void *ptr,char *file,long line);
 #ifndef  _LOW_ACCURACY_
 /* 64 bit multiply */
 
-#include <sys/types.h>
-
 union magic {
   struct {
 #ifdef WORDS_BIGENDIAN
@@ -179,7 +177,3 @@ static inline ogg_int32_t CLIP_TO_15(ogg_int32_t x) {
 #endif
 
 #endif
-
-
-
-

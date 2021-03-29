@@ -16,9 +16,9 @@
 #include <stdio.h>
 #define MISC_C
 #include "misc.h"
+#ifdef _VDBG_GRAPHFILE
 #include <sys/time.h>
 
-#ifdef _VDBG_GRAPHFILE
 static void **pointers=NULL;
 static long *insertlist=NULL; /* We can't embed this in the pointer list;
 			  a pointer can have any value... */
