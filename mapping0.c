@@ -108,40 +108,35 @@ int mapping_inverse(vorbis_dsp_state *vd,vorbis_info_mapping *info){
   int                   i,j;
   long                  n=ci->blocksizes[vd->W];
 
-  ogg_int32_t **pcmbundle=
-    alloca(sizeof(*pcmbundle)*vi->channels);
-  int          *zerobundle=
-    alloca(sizeof(*zerobundle)*vi->channels);
-  int          *nonzero=
-    alloca(sizeof(*nonzero)*vi->channels);
-  ogg_int32_t **floormemo=
-    alloca(sizeof(*floormemo)*vi->channels);
+  ogg_int32_t **pcmbundle =alloca(sizeof(*pcmbundle)*vi->channels);
+  int          *zerobundle=alloca(sizeof(*zerobundle)*vi->channels);
+  int          *nonzero   =alloca(sizeof(*nonzero)*vi->channels);
+  ogg_int32_t **floormemo =alloca(sizeof(*floormemo)*vi->channels);
   
   /* recover the spectral envelope; store it in the PCM vector for now */
   for(i=0;i<vi->channels;i++){
     int submap=0;
     int floorno;
+    vorbis_info_floor *vif;
     
     if(info->submaps>1)
       submap=info->chmuxlist[i];
     floorno=info->submaplist[submap].floor;
     
+    vif=ci->floor_param[floorno];
     if(ci->floor_type[floorno]){
       /* floor 1 */
-      floormemo[i]=alloca(sizeof(*floormemo[i])*
-			  floor1_memosize(ci->floor_param[floorno]));
-      floormemo[i]=floor1_inverse1(vd,ci->floor_param[floorno],floormemo[i]);
+      floormemo[i]=alloca(sizeof(*floormemo[i])*floor1_memosize(vif));
+      floormemo[i]=floor1_inverse1(vd,vif,floormemo[i]);
     }else{
       /* floor 0 */
-      floormemo[i]=alloca(sizeof(*floormemo[i])*
-			  floor0_memosize(ci->floor_param[floorno]));
-      floormemo[i]=floor0_inverse1(vd,ci->floor_param[floorno],floormemo[i]);
+      floormemo[i]=alloca(sizeof(*floormemo[i])*floor0_memosize(vif));
+      floormemo[i]=floor0_inverse1(vd,vif,floormemo[i]);
     }
-    
     if(floormemo[i])
       nonzero[i]=1;
     else
-      nonzero[i]=0;      
+      nonzero[i]=0;
     memset(vd->work[i],0,sizeof(*vd->work[i])*n/2);
   }
 
