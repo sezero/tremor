@@ -104,7 +104,6 @@ int res_inverse(vorbis_dsp_state *vd,vorbis_info_residue *info,
       ch=used;
       
       if(used){
-	
 	char **partword=(char **)alloca(ch*sizeof(*partword));
 	for(j=0;j<ch;j++)
 	  partword[j]=(char *)alloca(partwords*partitions_per_word*
@@ -170,13 +169,13 @@ int res_inverse(vorbis_dsp_state *vd,vorbis_info_residue *info,
       int partvals=n/samples_per_partition;
       int partwords=(partvals+partitions_per_word-1)/partitions_per_word;
       
-      char *partword=
-	(char *)alloca(partwords*partitions_per_word*sizeof(*partword));
       int beginoff=info->begin/ch;
       
       for(i=0;i<ch;i++)if(nonzero[i])break;
       if(i==ch)return(0); /* no nonzero vectors */
-      
+      else
+     { /* +scope */
+      char *partword=(char *)alloca(partwords*partitions_per_word*sizeof(*partword));
       samples_per_partition/=ch;
       
       for(s=0;s<info->stages;s++){
@@ -214,6 +213,7 @@ int res_inverse(vorbis_dsp_state *vd,vorbis_info_residue *info,
 	    }
 	}
       } 
+     } /* -scope */
     }
   }
  eopbreak:
