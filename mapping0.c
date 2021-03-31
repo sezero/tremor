@@ -108,12 +108,28 @@ int mapping_inverse(vorbis_dsp_state *vd,vorbis_info_mapping *info){
   int                   i,j;
   long                  n=ci->blocksizes[vd->W];
 
-  ogg_int32_t **pcmbundle =alloca(sizeof(*pcmbundle)*vi->channels);
-  int          *zerobundle=alloca(sizeof(*zerobundle)*vi->channels);
-  int          *nonzero   =alloca(sizeof(*nonzero)*vi->channels);
-  ogg_int32_t **floormemo =alloca(sizeof(*floormemo)*vi->channels);
+  VAR_STACK(ogg_int32_t *,pcmbundle,vi->channels);
+  VAR_STACK(int,          zerobundle,vi->channels);
+  VAR_STACK(int,          nonzero,vi->channels);
+  VAR_STACK(ogg_int32_t *,floormemo,vi->channels);
   
   /* recover the spectral envelope; store it in the PCM vector for now */
+  #ifndef HAVE_ALLOCA
+  for(i=0,j=0;i<vi->channels;i++){
+    int submap=0;
+    int floorno;
+
+    if(info->submaps>1) submap=info->chmuxlist[i];
+    floorno=info->submaplist[submap].floor;
+    j += (ci->floor_type[floorno])? floor1_memosize(ci->floor_param[floorno]) :
+				    floor0_memosize(ci->floor_param[floorno]);
+  }
+  #endif
+ {/*+vla scope */
+  #ifndef HAVE_ALLOCA
+  VAR_STACK(ogg_int32_t,tmp,j);
+  ogg_int32_t *p=tmp;
+  #endif
   for(i=0;i<vi->channels;i++){
     int submap=0;
     int floorno;
@@ -126,12 +142,22 @@ int mapping_inverse(vorbis_dsp_state *vd,vorbis_info_mapping *info){
     vif=ci->floor_param[floorno];
     if(ci->floor_type[floorno]){
       /* floor 1 */
+      #ifdef HAVE_ALLOCA
       floormemo[i]=alloca(sizeof(*floormemo[i])*floor1_memosize(vif));
       floormemo[i]=floor1_inverse1(vd,vif,floormemo[i]);
+      #else
+      floormemo[i]=floor1_inverse1(vd,vif,p);
+      p += floor1_memosize(vif);
+      #endif
     }else{
       /* floor 0 */
+      #ifdef HAVE_ALLOCA
       floormemo[i]=alloca(sizeof(*floormemo[i])*floor0_memosize(vif));
       floormemo[i]=floor0_inverse1(vd,vif,floormemo[i]);
+      #else
+      floormemo[i]=floor0_inverse1(vd,vif,p);
+      p += floor0_memosize(vif);
+      #endif
     }
     if(floormemo[i])
       nonzero[i]=1;
@@ -229,6 +255,8 @@ int mapping_inverse(vorbis_dsp_state *vd,vorbis_info_mapping *info){
 
   //for(j=0;j<vi->channels;j++)
   //_analysis_output("imdct",seq+j,vb->pcm[j],-24,n,0,0);
+
+ }/*-vla scope */
 
   /* all done! */
   return(0);

@@ -102,6 +102,11 @@ AC_ARG_ENABLE(64kHz-limit,
    CFLAGS="$CFLAGS -DLIMIT_TO_64kHz"
 )
 
+AC_ARG_ENABLE(alloca,
+   [AS_HELP_STRING([--disable-alloca], [disable alloca and only use variable-length arrays])],,
+   [enable_alloca=yes]
+)
+
 dnl --------------------------------------------------
 dnl Check for headers
 dnl --------------------------------------------------
@@ -119,7 +124,17 @@ dnl --------------------------------------------------
 dnl Stack allocation mode
 dnl --------------------------------------------------
 
-AC_FUNC_ALLOCA
+if test "x$enable_alloca" = "xyes"; then
+  AC_FUNC_ALLOCA
+fi
+
+AC_MSG_CHECKING(for C99 variable-size arrays)
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[]],
+  [[static int x; char a[++x]; a[sizeof a - 1] = 0; int N; return a[0];]] )],
+  [has_var_arrays=yes;AC_DEFINE([VAR_ARRAYS],[],[Use C99 variable-size arrays])],
+  [has_var_arrays=no]
+)
+AC_MSG_RESULT($has_var_arrays)
 
 
 dnl --------------------------------------------------

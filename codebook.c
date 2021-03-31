@@ -197,7 +197,7 @@ static int _make_decode_table(codebook *s,char *lengthlist,long quantvals,
     return 0;
   }
  else { /* +scope */
-  ogg_uint32_t *work=alloca((s->used_entries*2-2)*sizeof(*work));
+  VAR_STACK(ogg_uint32_t,work,s->used_entries*2-2);
   int i;
 
   if(_make_words(lengthlist,s->entries,work,quantvals,s,opb,maptype))return 1;
@@ -354,7 +354,7 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
   if (j!=0 && j!=1) /* EOF */
     goto _eofout;
  else { /* +scope */
-  char *lengthlist=(char *)alloca(sizeof(*lengthlist)*s->entries);
+  VAR_STACK(char,lengthlist,s->entries);
   switch(j){
   case 0:
     /* unordered */
@@ -445,7 +445,8 @@ int vorbis_book_unpack(oggpack_buffer *opb,codebook *s){
 	/* use dec_type 1: vector of packed values */
 
 	/* need quantized values before  */
-	s->q_val=alloca(sizeof(ogg_uint16_t)*quantvals);
+	VAR_STACK(ogg_uint16_t,q,quantvals);
+	s->q_val=q;
 	for(i=0;i<quantvals;i++)
 	  ((ogg_uint16_t *)s->q_val)[i]=oggpack_read(opb,s->q_bits);
 	
@@ -713,7 +714,7 @@ long vorbis_book_decodevs_add(codebook *book,ogg_int32_t *a,
 			      oggpack_buffer *b,int n,int point){
   if(book->used_entries>0){
     int step=n/book->dim;
-    ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
+    VAR_STACK(ogg_int32_t,v,book->dim);
     int i,j,o;
     
     for (j=0;j<step;j++){
@@ -729,7 +730,7 @@ long vorbis_book_decodevs_add(codebook *book,ogg_int32_t *a,
 long vorbis_book_decodev_add(codebook *book,ogg_int32_t *a,
 			     oggpack_buffer *b,int n,int point){
   if(book->used_entries>0){
-    ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
+    VAR_STACK(ogg_int32_t,v,book->dim);
     int i,j;
     
     for(i=0;i<n;){
@@ -747,7 +748,7 @@ long vorbis_book_decodev_add(codebook *book,ogg_int32_t *a,
 long vorbis_book_decodev_set(codebook *book,ogg_int32_t *a,
 			     oggpack_buffer *b,int n,int point){
   if(book->used_entries>0){
-    ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
+    VAR_STACK(ogg_int32_t,v,book->dim);
     int i,j;
     
     for(i=0;i<n;){
@@ -771,7 +772,7 @@ long vorbis_book_decodevv_add(codebook *book,ogg_int32_t **a,
 			      long offset,int ch,
 			      oggpack_buffer *b,int n,int point){
   if(book->used_entries>0){
-    ogg_int32_t *v = (ogg_int32_t *)alloca(sizeof(*v)*book->dim);
+    VAR_STACK(ogg_int32_t,v,book->dim);
     long i,j;
     int chptr=0;
     long m=offset+n;

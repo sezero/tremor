@@ -104,10 +104,14 @@ int res_inverse(vorbis_dsp_state *vd,vorbis_info_residue *info,
       ch=used;
       
       if(used){
+	#ifdef HAVE_ALLOCA
 	char **partword=(char **)alloca(ch*sizeof(*partword));
 	for(j=0;j<ch;j++)
 	  partword[j]=(char *)alloca(partwords*partitions_per_word*
 				     sizeof(*partword[j]));
+	#else
+	char partword[ch][partwords*partitions_per_word];
+	#endif
 	
 	for(s=0;s<info->stages;s++){
 	  
@@ -175,7 +179,7 @@ int res_inverse(vorbis_dsp_state *vd,vorbis_info_residue *info,
       if(i==ch)return(0); /* no nonzero vectors */
       else
      { /* +scope */
-      char *partword=(char *)alloca(partwords*partitions_per_word*sizeof(*partword));
+      VAR_STACK(char,partword,partwords*partitions_per_word);
       samples_per_partition/=ch;
       
       for(s=0;s<info->stages;s++){
