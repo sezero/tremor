@@ -1,7 +1,7 @@
 # build tremor (libvorbisidec) using OpenWatcom for OS/2 as a static libary
 #
 
-CFLAGS  = -bt=os2 -bm -fp5 -fpi87 -mf -oeatxh -w4 -ei -zp8
+CFLAGS  = -bt=os2 -bm -fp5 -fpi87 -mf -oeatxh -w4 -ei -j -zp8
 # -5s  :  Pentium stack calling conventions.
 # -5r  :  Pentium register calling conventions.
 CFLAGS += -5s
@@ -22,6 +22,6 @@ $(LIBNAME): $(OBJ)
 	$(COMPILE) -fo=$^@ $<
 
 distclean: clean .symbolic
-	rm -f *.lib
+	rm -f *.lib *.err
 clean: .symbolic
 	rm -f *.obj
