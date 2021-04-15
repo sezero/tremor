@@ -28,7 +28,7 @@ extern const ogg_int32_t FLOOR_fromdB_LOOKUP[];
 #define VIF_POSIT 63
 
 /***********************************************/
- 
+
 void floor1_free_info(vorbis_info_floor *i){
   vorbis_info_floor1 *info=(vorbis_info_floor1 *)i;
   if(info){
@@ -343,7 +343,7 @@ int floor1_inverse2(vorbis_dsp_state *vd,vorbis_info_floor *in,
 	ly=hy;
       }
     }
-    for(j=hx;j<n;j++)out[j]*=ly; /* be certain */    
+    for(j=hx;j<n;j++)out[j]*=ly; /* be certain */
     return(1);
   }
   memset(out,0,sizeof(*out)*n);

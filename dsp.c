@@ -15,7 +15,7 @@
 
  ********************************************************************/
 
-#include <stdlib.h> 
+#include <stdlib.h>
 #include "ogg.h"
 #include "mdct.h"
 #include "ivorbiscodec.h"

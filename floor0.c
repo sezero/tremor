@@ -121,6 +121,7 @@ static const unsigned char MLOOP_2[64]={
 
 static const unsigned char MLOOP_3[8]={0,1,2,2,3,3,3,3};
 
+static
 void vorbis_lsp_to_curve(ogg_int32_t *curve,int n,int ln,
 			 ogg_int32_t *lsp,int m,
 			 ogg_int32_t amp,
@@ -329,7 +330,7 @@ void vorbis_lsp_to_curve(ogg_int32_t *curve,int n,int ln,
       }
     }
     if(map>=ln){
-      map=ln-1; /* guard against the approximation */      
+      map=ln-1; /* guard against the approximation */
       nextf=9999999;
     }
   }

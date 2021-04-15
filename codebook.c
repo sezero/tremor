@@ -300,7 +300,7 @@ static int _make_decode_table(codebook *s,char *lengthlist,long quantvals,
 /* there might be a straightforward one-line way to do the below
    that's portable and totally safe against roundoff, but I haven't
    thought of it.  Therefore, we opt on the side of caution */
-long _book_maptype1_quantvals(codebook *b){
+static long _book_maptype1_quantvals(codebook *b){
   /* get us a starting hint, we'll polish it below */
   int bits=_ilog(b->entries);
   int vals=b->entries>>((bits-1)*(b->dim-1)/b->dim);
@@ -639,7 +639,7 @@ long vorbis_book_decode(codebook *book, oggpack_buffer *b){
  return decode_packed_entry_number(book,b);
 }
 
-int decode_map(codebook *s, oggpack_buffer *b, ogg_int32_t *v, int point){
+static int decode_map(codebook *s, oggpack_buffer *b, ogg_int32_t *v, int point){
   ogg_uint32_t entry = decode_packed_entry_number(s,b);
   int i;
   if(oggpack_eop(b))return(-1);
