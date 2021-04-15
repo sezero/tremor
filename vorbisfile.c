@@ -280,7 +280,7 @@ static int _fetch_headers(OggVorbis_File *vf,
      Ogg bitstream is in fact Vorbis data */
   
   vorbis_info_init(vi);
-  vorbis_comment_init(vc);
+  memset(vc,0,sizeof(*vc));/* vorbis_comment_init(vc); */
   
   i=0;
   while(i<3){
