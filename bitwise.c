@@ -159,15 +159,18 @@ long oggpack_read(oggpack_buffer *b,int bits){
   return(ret);
 }
 
+#if 0 /* unused in tremor-lowmem */
 long oggpack_bytes(oggpack_buffer *b){
   if(b->headend<0)return b->count+b->head->length;
   return b->count + b->head->length-b->headend + 
     (b->headbit+7)/8;
 }
+#endif
 
+#if 0 /* unused in tremor-lowmem */
 long oggpack_bits(oggpack_buffer *b){
   if(b->headend<0)return (b->count+b->head->length)*8;
   return (b->count + b->head->length-b->headend)*8 + 
     b->headbit;
 }
-
+#endif

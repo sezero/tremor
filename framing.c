@@ -475,6 +475,7 @@ more page packet), the return will be:
   ogg_page_continued(page) !=0
 */
 
+#if 0 /* unused in tremor-lowmem */
 int ogg_page_packets(ogg_page *og){
   int i;
   int n;
@@ -487,6 +488,7 @@ int ogg_page_packets(ogg_page *og){
     if(oggbyte_read1(&ob,27+i)<255)count++;
   return(count);
 }
+#endif
 
 /* Static CRC calculation table.  See older code in CVS for dead
    run-time initialization code. */
@@ -769,6 +771,7 @@ long ogg_sync_pageseek(ogg_sync_state *oy,ogg_page *og){
    Returns pointers into buffered data; invalidated by next call to
    _stream, _clear, _init, or _buffer */
 
+#if 0 /* unused in tremor-lowmem */
 int ogg_sync_pageout(ogg_sync_state *oy, ogg_page *og){
 
   /* all we need to do is verify a page at the head of the stream
@@ -796,6 +799,7 @@ int ogg_sync_pageout(ogg_sync_state *oy, ogg_page *og){
 
   }
 }
+#endif
 
 /* clear things to an initial state.  Good to call, eg, before seeking */
 int ogg_sync_reset(ogg_sync_state *oy){
@@ -1113,4 +1117,3 @@ void ogg_page_dup(ogg_page *dup,ogg_page *orig){
   dup->header=ogg_buffer_dup(orig->header);
   dup->body=ogg_buffer_dup(orig->body);
 }
-
