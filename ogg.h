@@ -170,8 +170,6 @@ extern int      ogg_stream_reset(ogg_stream_state *os);
 extern int      ogg_stream_reset_serialno(ogg_stream_state *os,int serialno);
 extern int      ogg_stream_eos(ogg_stream_state *os);
 
-extern int      ogg_page_checksum_set(ogg_page *og);
-
 extern int      ogg_page_version(ogg_page *og);
 extern int      ogg_page_continued(ogg_page *og);
 extern int      ogg_page_bos(ogg_page *og);
