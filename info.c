@@ -38,10 +38,6 @@ STIN int _v_toupper(int c) {
   return (c >= 'a' && c <= 'z') ? (c & ~('a' - 'A')) : c;
 }
 
-void vorbis_comment_init(vorbis_comment *vc){
-  memset(vc,0,sizeof(*vc));
-}
-
 /* This is more or less the same as strncasecmp - but that doesn't exist
  * everywhere, and this is a fairly trivial function, so we include it */
 static int tagcompare(const char *s1, const char *s2, int n){
@@ -90,6 +86,10 @@ int vorbis_comment_query_count(vorbis_comment *vc, char *tag){
   return count;
 }
 
+void vorbis_comment_init(vorbis_comment *vc){
+  memset(vc,0,sizeof(*vc));
+}
+
 void vorbis_comment_clear(vorbis_comment *vc){
   if(vc){
     long i;
@@ -98,8 +98,8 @@ void vorbis_comment_clear(vorbis_comment *vc){
     if(vc->user_comments)_ogg_free(vc->user_comments);
 	if(vc->comment_lengths)_ogg_free(vc->comment_lengths);
     if(vc->vendor)_ogg_free(vc->vendor);
+    memset(vc,0,sizeof(*vc));
   }
-  memset(vc,0,sizeof(*vc));
 }
 
 /* blocksize 0 is guaranteed to be short, 1 is guarantted to be long.
