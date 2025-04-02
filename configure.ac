@@ -4,14 +4,15 @@ dnl ------------------------------------------------
 dnl Initialization and Versioning
 dnl ------------------------------------------------
 
-AC_INIT(mdct.c)
+AC_INIT([libvorbisidec], [1.2.1])
+AC_CONFIG_SRCDIR([mdct.c])
 
 AC_CANONICAL_HOST
 AC_CANONICAL_TARGET
 
-AM_CONFIG_HEADER([config.h])
+AC_CONFIG_HEADERS([config.h])
 
-AM_INIT_AUTOMAKE(libvorbisidec,1.2.1)
+AM_INIT_AUTOMAKE
 
 dnl AM_MAINTAINER_MODE only provides the option to configure to enable it
 AM_MAINTAINER_MODE
@@ -36,7 +37,7 @@ AC_PROG_CC
 AC_PROG_CPP
 CFLAGS="$cflags_save"
 
-AM_PROG_LIBTOOL
+LT_INIT
 
 dnl --------------------------------------------------
 dnl Set build flags based on environment
@@ -76,7 +77,7 @@ LDFLAGS="$LDFLAGS $ldflags_save"
 
 
 # Test whenever ld supports -version-script
-AC_PROG_LD
+LT_PATH_LD
 AC_PROG_LD_GNU
 if test "x$lt_cv_prog_gnu_ld" = "xyes"; then
    SHLIB_VERSION_ARG="-Wl,--version-script=Version_script"
@@ -143,4 +144,5 @@ AC_SUBST(LIBS)
 AC_SUBST(DEBUG)
 AC_SUBST(PROFILE)
 
-AC_OUTPUT(Makefile Version_script vorbisidec.pc)
+AC_CONFIG_FILES([Makefile Version_script vorbisidec.pc])
+AC_OUTPUT

@@ -1,6 +1,6 @@
 AUTOMAKE_OPTIONS = foreign
 
-INCLUDES = -I./ @OGG_CFLAGS@
+AM_CPPFLAGS = -I./ @OGG_CFLAGS@
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = vorbisidec.pc
